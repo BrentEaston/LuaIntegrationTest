@@ -10,6 +10,8 @@
 
 #include <string>
 
+class ScriptResult;
+
 class Script;
 class Scriptable;
 
@@ -30,7 +32,7 @@ public:
 	/*!
 	 * \brief Has the Scripting Environment been successfully initialised?
 	 */
-	virtual const bool initialised() const=0;
+	virtual const bool isInitialised() const=0;
 
 	/*!
 	 * \brief Has the Scripting Environment been successfully initialised?
@@ -46,7 +48,7 @@ public:
 	 * \param out error Error message if validation fails
 	 * \return boolean set to true if \a expression passed validation
 	 */
-	virtual void validate (Script *script)=0;
+	virtual void validate (Script *script, ScriptResult &result)=0;
 
 	/*!
 	 * \brief Execute a script
@@ -58,14 +60,11 @@ public:
 	 * \param out error Error message if there was a run-time error during evaluation
 	 * \return boolean set to true if there was no run-time error
 	 *
-	 * \sa ExpressionHandle
-	 *
-	 * \note Note that ExpressionHandle's are shared between all expressions with the same text.
 	 */
-	virtual void execute (Script *script, Scriptable *context)=0;
+	virtual void execute (Script *script, Scriptable *context, ScriptResult &result)=0;
 
 protected:
-	bool isInitialised;
+	bool initialised;
 	std::string initialisationError;
 };
 

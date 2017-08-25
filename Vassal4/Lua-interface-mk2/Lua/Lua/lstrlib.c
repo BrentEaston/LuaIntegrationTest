@@ -10,8 +10,10 @@
  * Brent Easton  20 Aug 2017 Hard-code a limit on how many steps a pattern match can take to prevent scripts using crazy patterns as a DOS attack
  */
 
-static long matchSteps;				// Brent Easton 19/8/17
-#define MAX_MATCH_STEPS 10000000	// Brent Easton 19/8/17
+// Brent Easton 19/8/17 Start
+static long matchSteps;
+#define MAX_MATCH_STEPS 10000000
+// Brent Easton 19/8/17 End
 
 #define lstrlib_c
 #define LUA_LIB
@@ -32,7 +34,6 @@ static long matchSteps;				// Brent Easton 19/8/17
 
 #include "lauxlib.h"
 #include "lualib.h"
-
 
 /*
 ** maximum number of captures that a pattern can do during
@@ -142,7 +143,7 @@ static int str_rep (lua_State *L) {
 	// TODO Make this configurable from the Vassal Lua configuration
 	//
 	if (n > 40) {
-		luaL_error (L, "string.rep too many replications");
+		luaL_error (L, "string.rep() too many replications");
 	}
 
     size_t totallen = (size_t)n * l + (size_t)(n - 1) * lsep;
@@ -248,7 +249,8 @@ static const char *match (MatchState *ms, const char *s, const char *p);
 // Brent Easton 19/8/17
 void static incrMatchSteps(MatchState *ms) {
 	if (matchSteps++ > MAX_MATCH_STEPS) {
-		luaL_error (ms->L, "Pattern too complex");
+		matchSteps=0;
+		luaL_error (ms->L, "match Pattern too complex");
 	}
 }
 

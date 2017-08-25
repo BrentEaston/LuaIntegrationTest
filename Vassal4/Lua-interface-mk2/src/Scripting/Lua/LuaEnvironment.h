@@ -10,6 +10,7 @@
 
 #include <Scripting/ProxyFactory.h>
 #include <Scripting/ScriptingEnvironment.h>
+#include <Scripting/ScriptResult.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,31 +33,34 @@ public:
 	void setState(lua_State* state);
 
 	/* Implementation of ScriptingEnvironment */
-	void validate (Script *script);
-	void execute (Script *script, Scriptable *context);
+	void validate (Script *script, ScriptResult &result);
+	void execute (Script *script, Scriptable *context, ScriptResult &result);
 
 	ProxyFactory getProxyFactory() const;
 
-	void luaAssert(lua_State *l, const bool test, const std::string source, const std::string message);
+	void luaAssert(lua_State *l, const bool test, const std::string source, const std::string message, const ScriptResult::eResult errorType);
 
-	virtual const bool initialised() const;
+	virtual const bool isInitialised() const;
 	virtual const std::string getInitialisationError() const;
 
 	void pushCurrentContext(Scriptable *context);
 	void popCurrentContext();
 	std::unique_ptr<ContextFrame> & getCurrentContext() const;
+	int getCurrentContextLevel() const;
 
 	// Sandbox limits for a single script, including all sub-scripts
 	// TODO Make the configurable Via Vassal Config system
 	static const int LUA_STEP_DELTA = 200;			// How often (Lua VM steps) between Memory and CPU checks
-	static const long LUA_STEP_LIMIT = 3000000; 	// How many Memory/CPU checks before raising an error
-	static const int LUA_MEMORY_LIMIT = 1000;		// Maximum memory allocated to the Lua Environment
+	static const long LUA_STEP_LIMIT = 250000; 	// How many Memory/CPU checks before raising an error
+	static const int LUA_MEMORY_LIMIT = 500;		// Maximum memory allocated to the Lua Environment
 	static const int LUA_STRING_REP_LIMIT = 40;	// Maximum replication argument for string.rep()
 	static const int LUA_RE_ENTRY_LIMIT = 40;		// Maximum number of times a script can be called from within another script without returning
 
 	long incrLuaStepCount();
 	void resetLuaStepCount();
 private:
+
+	void translateLuaError (lua_State *l, ScriptResult &result);
 
 	/** The Global Lua state */
 	lua_State *state;

@@ -84,6 +84,6 @@ void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TVal
 		result.setResultValue (make_unique<TValue> ((void *) map, map->getScriptableType()));
 		return ;
 	}
-	result.setInterfaceError("ProxyMap: Unknown operation " + operation);
+	result.setVassalError("ProxyMap: Unknown operation " + operation);
 	return;
 }

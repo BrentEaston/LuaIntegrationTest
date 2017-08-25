@@ -9,6 +9,7 @@
 #define EXPRESSION_H_
 
 #include <Scripting/Script.h>
+#include <Scripting/ScriptingEnvironment.h>
 #include <string>
 
 /***
@@ -16,18 +17,18 @@
  */
 class Expression: public Script {
 public:
-	Expression(const std::string script, const std::string name) :
-			Script(script, name) {
-	}
-	;
-	Expression(const std::string script, const std::string name, const eReturnType type) :
-			Script(script, name, type) {
-	}
-	;
-	Expression(const std::string script, const eReturnType type) :
-			Script(script, type) {
-	}
-	;
+	Expression(ScriptingEnvironment *env, const std::string script, const std::string name) :
+			Script(env, script, name) {
+	};
+
+	Expression(ScriptingEnvironment *env, const std::string script, const std::string name, const eReturnType type) :
+			Script(env, script, name, type) {
+	};
+
+	Expression(ScriptingEnvironment *env, const std::string script, const eReturnType type) :
+			Script(env, script, type) {
+	};
+
 	virtual ~Expression();
 
 	std::string getExecutableSource() const;

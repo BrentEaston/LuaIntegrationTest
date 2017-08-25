@@ -22,7 +22,15 @@ bool ScriptResult::isSuccessful() const {
 	return getResultLevel() == eResult_Success;
 }
 
-int ScriptResult::getResultLevel() const {
+bool ScriptResult::isScriptError() const {
+	return getResultLevel() == eResult_Script_Error;
+}
+
+bool ScriptResult::isVassalError() const {
+	return getResultLevel() == eResult_Vassal_Error;
+}
+
+ScriptResult::eResult ScriptResult::getResultLevel() const {
 	return resultLevel;
 }
 
@@ -33,18 +41,19 @@ const std::unique_ptr<TValue> & ScriptResult::getResult() const {
 void ScriptResult::setResultValue (std::unique_ptr<TValue> result) {
 	this->result = std::move(result);
 	setResultLevel(eResult_Success);
+	error = "";
 }
 
 std::string ScriptResult::getError() const {
 	return error;
 }
 
-void ScriptResult::setScriptError (const std::string error) {
-	setError (error, eResult_Script_Error);
+void ScriptResult::clearError() {
+	setError ("", eResult_Success);
 }
 
-void ScriptResult::setInterfaceError (const std::string error) {
-	setError (error, eResult_Interface_Error);
+void ScriptResult::setScriptError (const std::string error) {
+	setError (error, eResult_Script_Error);
 }
 
 void ScriptResult::setVassalError (const std::string error) {

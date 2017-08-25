@@ -24,13 +24,13 @@ void Proxy::checkOperationArguments(const string proxyName,
 
 	// Check there is a proxy definition
 	if (proxyDefinitions.count(proxyName) == 0) {
-		result.setInterfaceError("No Proxy Definition found for " + proxyName);
+		result.setVassalError("No Proxy Definition found for " + proxyName);
 		return;
 	}
 
 	// Check the operation is valid.
 	if (!proxyDefinitions[proxyName]->isOperationValid(operationName)) {
-		result.setInterfaceError("Invalid operation " + proxyName + ":" + operationName + ".");
+		result.setVassalError("Invalid operation " + proxyName + ":" + operationName + ".");
 		return;
 	}
 
@@ -39,7 +39,7 @@ void Proxy::checkOperationArguments(const string proxyName,
 
 	// Check the number of Arguments matches.
 	if (((int) args.size()) != operation->getArgumentCount()) {
-		result.setInterfaceError("Invalid number of arguments for " + proxyName + ":"
+		result.setVassalError("Invalid number of arguments for " + proxyName + ":"
 				+ operationName + ". Expected "
 				+ to_string(operation->getArgumentCount()) + ", got "
 				+ to_string(args.size()));
@@ -51,7 +51,7 @@ void Proxy::checkOperationArguments(const string proxyName,
 		TValue::eType expectedArgType = operation->getArgumentType(argIndex);
 		TValue::eType actualArgType = args.at(argIndex)->getType();
 		if (expectedArgType != actualArgType) {
-			result.setInterfaceError("Invalid type for argument " + to_string(argIndex + 1)
+			result.setVassalError("Invalid type for argument " + to_string(argIndex + 1)
 					+ " for " + proxyName + ":" + operationName + ". Expected "
 					+ TValue::getTypeName(expectedArgType) + "("
 					+ to_string(expectedArgType) + "), got "

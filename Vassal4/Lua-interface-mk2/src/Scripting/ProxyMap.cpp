@@ -102,7 +102,7 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 		return;
 	}
 
-	result.setInterfaceError("ProxyMap: Unknown operation " + operation);
+	result.setVassalError("ProxyMap: Unknown operation " + operation);
 	return ;
 }
 

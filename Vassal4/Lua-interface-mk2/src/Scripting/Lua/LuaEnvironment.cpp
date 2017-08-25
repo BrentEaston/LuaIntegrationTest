@@ -1,7 +1,7 @@
 /*
  * LuaEnvironment.cpp
  *
- * A LuaEnvironment is a sanboxes Lua interpreter
+ * A LuaEnvironment is a sandboxes Lua interpreter
  *
  *
  *  Created on: 29/07/2017
@@ -9,10 +9,10 @@
  *
  */
 
-
 #include <Lua/lua.hpp>
 #include <Scripting/ContextFrame.h>
 #include <Scripting/Lua/LuaEnvironment.h>
+#include <Scripting/Lua/LuaError.h>
 #include <Scripting/Proxy.h>
 #include <Scripting/Script.h>
 #include <Scripting/Scriptable.h>
@@ -42,14 +42,49 @@ static LuaEnvironment *luaEnvironment;
  * Handle an error detected during execution of a callback by pushing an error message on to the stack
  * and calling lua_error to jump back to the last pcall.
  *
- * A call to failed call to cbAssert indicates an error in the Vassal to Lua protocol, NOT in the user script code.
- *
- * Needs to be static to be callable from callback
+ * Needs to be static to be callable from callback and Lua
  */
-static void cbAssert(lua_State *l, const bool test, const string source, const string message) {
-	luaEnvironment ->luaAssert(l, test, source, message);
+extern "C" {
+
+void cbAssert(lua_State *l, const bool test, const string source, const string message, const ScriptResult::eResult errorLevel) {
+
+	if (!test) {
+		// Create an error object on the Stack and call lua_error
+		//cout << "cbAssert: Error raised" << endl;
+		lua_newtable(l);
+		lua_pushinteger(l, errorLevel);
+		lua_setfield(l, -2, "level");
+		lua_pushstring(l, (source + ": " + message).c_str());
+		lua_setfield(l, -2, "error");
+		lua_error(l);
+	}
 }
 
+}
+
+/*
+ * Handle errors raised in the Lua part of the interface. Errors from deeper levels of call will propagate back up
+ * to the top-level script
+ *
+ * The C interface gives us more access to the Lua internals to generate a better error message including the
+ * line number of the script.
+ *
+ * raiseError is called with 3 arguments pushed on the stack:
+ * 1. An Error object that may be a String, or an Error table
+ * 2. An Error level, Script or Vassal
+ * 3. An indicator of how many Lua stack frames back the error was generated
+ *
+ * Read the arguments, convert a String error to an error table and call lua_error
+ */
+static int raiseError(lua_State *l) {
+	// cout << "In raiseError" << endl;
+
+	LuaError error (l);
+	error.build();
+	error.throwError();
+
+	return 0;
+}
 /**
  * Static callback routine used by Lua scripts to act on Vassal game objects.
  *
@@ -78,28 +113,29 @@ static int callback(lua_State *l) {
 	string id = "Callback";
 
 	// 1st argument must be an integer and must represent a valid Scriptable type
-	cbAssert(l, nargs > 0, id, "No arguments supplied in Callback");
-	cbAssert(l, lua_isinteger(l, 1), id, "Callback arg 1 is not an integer");
+	cbAssert(l, nargs > 0, id, "[1] No arguments supplied in Callback", ScriptResult::eResult_Vassal_Error);
+	cbAssert(l, lua_isinteger(l, 1), id, "Callback arg 1 is not an integer", ScriptResult::eResult_Vassal_Error);
 	Scriptable::eType contextType = (Scriptable::eType) lua_tointeger(l, 1);
 	id += ":" + Scriptable::getTypeName(contextType);
-	cbAssert(l, Scriptable::isValidType(contextType), id, "Callback arg 1 type is not valid (" + to_string(contextType) + ")");
+	cbAssert(l, Scriptable::isValidType(contextType), id, "Callback arg 1 type is not valid (" + to_string(contextType) + ")",
+			ScriptResult::eResult_Vassal_Error);
 	// cout << "Callback: Target type =" << contextType << endl;
 
 	// 2nd argument must be a pointer to the Scriptable to use as a context
-	cbAssert(l, nargs > 1, id, "Callback arg 2 missing");
-	cbAssert(l, lua_islightuserdata(l, 2), id, "Callback arg 2 is not a pointer");
+	cbAssert(l, nargs > 1, id, "Callback arg 2 missing", ScriptResult::eResult_Vassal_Error);
+	cbAssert(l, lua_islightuserdata(l, 2), id, "Callback arg 2 is not a pointer", ScriptResult::eResult_Vassal_Error);
 	const void *contextPtr = lua_topointer(l, 2);
 	// cout << "callback: Target object passed to callback=" << contextPtr << endl;
 
 	// 3rd Argument must be a raw pointer to the current ContextFrame
-	cbAssert(l, nargs > 2, id, "Callback arg 3 missing");
-	cbAssert(l, lua_islightuserdata(l, 3), id, "Callback arg 3 is not a pointer");
+	cbAssert(l, nargs > 2, id, "Callback arg 3 missing", ScriptResult::eResult_Vassal_Error);
+	cbAssert(l, lua_islightuserdata(l, 3), id, "Callback arg 3 is not a pointer", ScriptResult::eResult_Vassal_Error);
 	ContextFrame *myContext = (ContextFrame *) lua_topointer(l, 3);
 	// cout << "callback: Context passed to callback=" << myContext << endl;
 
 	// 4th Argument must be the name of the operation to perform on the Scriptable
-	cbAssert(l, nargs > 3, id, "Callback arg 4 missing");
-	cbAssert(l, lua_isstring(l, 4), id, "Callback arg 4 is not a string");
+	cbAssert(l, nargs > 3, id, "Callback arg 4 missing", ScriptResult::eResult_Vassal_Error);
+	cbAssert(l, lua_isstring(l, 4), id, "Callback arg 4 is not a string", ScriptResult::eResult_Vassal_Error);
 	string operation = lua_tostring(l, 4);
 	id += ":" + operation + "[";
 
@@ -118,13 +154,13 @@ static int callback(lua_State *l) {
 			// cout << "Callback: Arg count is " << args.size() << ", arg 1 type is " << args.front()->getType() << endl;
 
 		} else if (lua_isinteger(l, actualParamIdx)) {
-			long long int i = lua_tointeger(l, actualParamIdx++);
+			int i = lua_tointeger(l, actualParamIdx++);
 			id += ":" + to_string(i);
 			// cout << "Callback: op arg " << ++opParamIdx << " Integer=" << i << endl;
 			args.push_back(make_unique<TValue>(i));
 
 		} else if (lua_isnumber(l, actualParamIdx)) {
-			double d = lua_tonumber(l, actualParamIdx++);
+			float d = lua_tonumber(l, actualParamIdx++);
 			id += ":" + to_string(d);
 			// cout << "Callback: op arg " << ++opParamIdx << " Float=" << d << endl;
 			args.push_back(make_unique<TValue>(d));
@@ -139,34 +175,28 @@ static int callback(lua_State *l) {
 			string paramId = ":Object";
 			// A lightuserdata is a pointer to a Vassal Game Object or Iterator.
 			const void * pointerArg = lua_topointer(l, actualParamIdx++);
-			cbAssert(l, actualParamIdx < nargs, id + paramId + "]", "Object arg not followed by parameter type arg");
-
-			// The Object Pointer MUST be immediately followed by an integer representing the parameter type .
-//			cbAssert(l, lua_isinteger(l, actualParamIdx), id + paramId + "]", "Object arg not followed by integer arg for parameter type");
-//			TValue::eType paramType = (TValue::eType) lua_tointeger(l, actualParamIdx++);
-//			cbAssert(l, (paramType == TValue::eType_Vobject || paramType == TValue::eType_Viterator), id + paramId + "]", "Object arg not followed by parameter type of Object or Iterator");
-//
-//			string ptype = (paramType == TValue::eType_Vobject) ? "Object" : "Iterator";
-//			paramId += "." + ptype;
+			cbAssert(l, actualParamIdx < nargs, id + paramId + "]", "Object arg not followed by parameter type arg",
+					ScriptResult::eResult_Vassal_Error);
 
 			// The Parameter type MUST be followed by the Object type
-			cbAssert(l, actualParamIdx < nargs, id + paramId + "]", " Object arg not followed by object type argument");
-			cbAssert(l, lua_isinteger(l, actualParamIdx), id + paramId + "]", " Object arg not followed by integer arg for Object type");
+			cbAssert(l, actualParamIdx < nargs, id + paramId + "]", " Object arg not followed by object type argument",
+					ScriptResult::eResult_Vassal_Error);
+			cbAssert(l, lua_isinteger(l, actualParamIdx), id + paramId + "]",
+					" Object arg not followed by integer arg for Object type", ScriptResult::eResult_Vassal_Error);
 			Scriptable::eType objectType = (Scriptable::eType) lua_tointeger(l, actualParamIdx++);
 
-			cbAssert(l, Scriptable::isValidType(objectType), id +paramId + "]", "Object type is not valid (" + to_string(objectType) + ")");
+			cbAssert(l, Scriptable::isValidType(objectType), id + paramId + "]",
+					"Object type is not valid (" + to_string(objectType) + ")", ScriptResult::eResult_Vassal_Error);
 
 			// TODO Work out why the hell I get a const correctness error message when calling
-			// 		TValue(pointerArg, objectType, paramType)
+			// 		TValue(pointerArg, objectType)
 			// but not when calling the 1 argument version
 			// 		TValue(pointerArg)
 			// Lua returns the pointer as const void *, can't change that
-			unique_ptr<TValue> tv = make_unique<TValue> (pointerArg);
+			unique_ptr<TValue> tv = make_unique<TValue>(pointerArg);
 			tv->setObjectType(objectType);
 
-
 			// Create the TValue and add it to the Argument list
-			// args.push_back(new TValue(pointerArg, objectType, paramType));
 			args.push_back(move(tv));
 
 			// cout << "Callback: op arg " << ++opParamIdx << " " << ptype << " type"  << endl;
@@ -175,7 +205,7 @@ static int callback(lua_State *l) {
 			id += paramId;
 
 		} else {
-			cbAssert(l, 0, id + "]", "Unknown Argument type from Lua");
+			cbAssert(l, 0, id + "]", "Unknown Argument type from Lua", ScriptResult::eResult_Vassal_Error);
 		}
 	}
 
@@ -188,38 +218,23 @@ static int callback(lua_State *l) {
 	// the error message in error.
 	// If performOperation returns true, then there was no Vassal-caused error, but there may still be some script
 	// related error that will be returned to the calling script in the result.
-	//unique_ptr<TValue> result;
-	string error;
-
-	// cout << "Callback: " << id << " Using context at " << myContext << endl;
-	// cout << "Callback: " << id << " contextPre= " << contextPtr << endl;
-
-	// if (contextType == Scriptable::eType_Piece) {
-		// Piece *p = (Piece *) contextPtr;
-		// cout << "Callback: piece name =" << p->getName() << endl;
-	// }
-
-	// ProxyPiece *pp = (ProxyPiece *) myContext->getProxy(contextType, contextPtr).get();
-
-	// cout << "Callback: Context returned ProxyPiece at "<< pp << endl;
-	// cout << "Callback: ProxyPiece contains Piece is at " << pp ->getPiece() << endl;
-	// cout << "Callback: Arg count is " << args.size() <<  endl;
 
 	ScriptResult scriptResult;
 
-	// bool success = myContext->getProxy(contextType, contextPtr) -> performOperation(operation, args, result, error);
-	myContext->getProxy(contextType, contextPtr) -> performOperation(operation, args, scriptResult);
+	myContext->getProxy(contextType, contextPtr)->performOperation(operation, args, scriptResult);
 
+	/*
+	 *  Pop the args that where sent to us from Lua off the stack.
+	 *  NOTE: These cannot be popped prior to this as their value becomes undefined once popped
+	 */
 
-	// Pop the args that where sent to us from Lua off the stack. These cannot be popped prior to this as their value
-	// becomes undefined.
 	lua_pop(l, nargs);
 
 	// If there is an error trying to talk to the Vassal object, abort!
-	cbAssert (l, scriptResult.getResultLevel() == ScriptResult::eResult_Success, id, scriptResult.getError());
+	cbAssert(l, scriptResult.getResultLevel() == ScriptResult::eResult_Success, id, scriptResult.getError(),
+			scriptResult.getResultLevel());
 
 	int returnArgsCount = 0;
-	// unique_ptr<TValue> result = move(scriptResult.getResult());
 	TValue result = *(scriptResult.getResult().get());
 
 	// cout << "Callback: result type was " << result.getType() << endl;
@@ -253,28 +268,30 @@ static int callback(lua_State *l) {
 		returnArgsCount++;
 		break;
 	default:
-		cbAssert(l, 0, id, "TValue from Vassal with unknown type (" + to_string(result.getType()) + ")"); /* Unknown TValue type */
+		cbAssert(l, 0, id, "TValue from Vassal with unknown type (" + to_string(result.getType()) + ")",
+				ScriptResult::eResult_Vassal_Error); /* Unknown TValue type */
 		break;
 	}
 
 	return returnArgsCount;
 }
 
-// TODO Move these into LuaEnvironment, and access through *luaEnvironment
-
-
-static void hook(lua_State* L, lua_Debug *ar)
-{
-	if (luaEnvironment->incrLuaStepCount() > LuaEnvironment::LUA_STEP_LIMIT) {
-		luaL_error (L, "Script using too much CPU");
-	}
-	if (lua_gc (L, LUA_GCCOUNT, 0) > LuaEnvironment::LUA_MEMORY_LIMIT) {
-		luaL_error (L, "Script using too much Memory");
-	}
+/*
+ * Debug hook called from within Lua every 200 (configuable) VM steps executed.
+ * Check for memory and CPU over-usage.
+ */
+static void hook(lua_State* l, lua_Debug *ar) {
+	cbAssert(l, (luaEnvironment->incrLuaStepCount() <= LuaEnvironment::LUA_STEP_LIMIT), "", "Script using too much CPU",
+			ScriptResult::eResult_Script_Error);
+	cbAssert(l, (lua_gc(l, LUA_GCCOUNT, 0) <= LuaEnvironment::LUA_MEMORY_LIMIT), "", "Script using too much Memory",
+			ScriptResult::eResult_Script_Error);
 }
 
+/*
+ * Create and initialise a Lua scripting environment
+ */
 LuaEnvironment::LuaEnvironment() {
-	isInitialised = false;
+	initialised = false;
 	initialisationError = "";
 
 	setState(nullptr);
@@ -288,6 +305,9 @@ LuaEnvironment::~LuaEnvironment() {
 	}
 }
 
+/*
+ * Lazy initialisation of the Lua Environment.
+ */
 void LuaEnvironment::initialize() {
 
 	// Create an empty context frame
@@ -306,24 +326,28 @@ void LuaEnvironment::initialize() {
 		if (luaL_loadfile(getState(), INIT_FILE_NAME.c_str())) {
 			string error = lua_tostring(l, -1);
 			lua_pop(l, 1);
-			initialisationError = "Lua Environment failed to initialised. Error compiling "+INIT_FILE_NAME+": "+error;
+			initialisationError = "Lua Environment failed to initialise. Error compiling " + INIT_FILE_NAME + ": " + error;
 			return;
 		}
 
 		if (lua_pcall(l, 0, LUA_MULTRET, 0)) {
 			string error = lua_tostring(l, -1);
 			lua_pop(l, 1);
-			initialisationError = "Lua Environment failed to initialised. Error running "+INIT_FILE_NAME+": "+error;
+			initialisationError = "Lua Environment failed to initialise. Error running " + INIT_FILE_NAME + ": " + error;
 			return;
 		}
 
 		// Register the callback function
 		lua_register(l, "callback", callback);
 
-		// Debug hook
+		// Register the error handler
+		lua_register(l, "raiseError", raiseError);
+
+		// Register the cpu/memory check hook
 		lua_sethook(l, hook, LUA_MASKCOUNT, LuaEnvironment::LUA_STEP_DELTA);
 
-		isInitialised = true;
+		// Mark enviromnent as successfully initialised
+		initialised = true;
 	}
 }
 
@@ -335,8 +359,8 @@ lua_State* LuaEnvironment::getState() {
 	return this->state;
 }
 
-const bool LuaEnvironment::initialised() const {
-	return isInitialised;
+const bool LuaEnvironment::isInitialised() const {
+	return initialised;
 }
 
 /*!
@@ -346,8 +370,35 @@ const string LuaEnvironment::getInitialisationError() const {
 	return initialisationError;
 }
 
-void LuaEnvironment::validate(Script *expression) {
+/*
+ * Translate an Error object returned from Lua into a ScriptResult.
+ *
+ * Lua should have returned an error object as the second item on the stack. There can be two kinds:
+ * 1. If it is a Lua table, then it has two entries, "level" contains the error level and "error" contains the
+ * error message.
+ * 2. If is is a String, it is a raw error message and we assume it is a Vassal Error
+ * an Error object below that. An Error object is a table with
+ */
+void LuaEnvironment::translateLuaError(lua_State *l, ScriptResult &result) {
 
+	if (lua_isstring(l, -1)) {
+		string error = lua_tostring(l, -1);
+		result.setVassalError(error);
+
+	} else if (lua_istable(l, -1)) {
+		LuaError luaError (l);
+		luaError.build();
+		result.setError(luaError.formatError(), luaError.getErrorLevel());
+
+	} else {
+		string errorType = lua_typename(l, lua_type(l, -1));
+		result.setVassalError("Unknown Error object returned from Lua: "+errorType);
+	}
+
+}
+
+void LuaEnvironment::validate(Script *expression, ScriptResult &result) {
+	// cout << "LuaEnvironment::validate start, top=" << lua_gettop(getState()) << endl;
 	lua_State *l = getState();
 
 	// Get Lua to compile the expression (this does not run it)
@@ -355,64 +406,95 @@ void LuaEnvironment::validate(Script *expression) {
 
 	// Invalid, set the error into the expression, pop the error off the Lua stack and return
 	if (i) {
-		expression->setError(lua_tostring(l, -1));
-		lua_pop(l, 1);
+		string err = lua_tostring(l, -1);
+		int pos = err.find(']', 0);
+		result.setScriptError("["+expression->getName()+err.substr(pos, string::npos));
+		lua_pop(l, lua_gettop(l));
 		return;
 	}
 
 	// No error, clear the error flag in the expression and pop the compiled expression off the Lua stack.
-	lua_pop(getState(), 1);
-	expression->setError("");
+	result.clearError();
+	lua_pop(l, lua_gettop(l));
 	return;
 }
 
-void LuaEnvironment::execute(Script *script, Scriptable *thisPtr) {
-
+void LuaEnvironment::execute(Script *script, Scriptable *thisPtr, ScriptResult &result) {
 	lua_State *l = getState();
+
+	// cout << "LuaEnvironment::execute start, top=" << lua_gettop(getState()) << endl;
+
+	//
+	if (getCurrentContextLevel() >= LUA_RE_ENTRY_LIMIT) {
+		result.setScriptError("Scripts nested too deeply");
+		return;
+	}
 
 	// Create a new ContextFrame containing the 'this' proxy on to the top of the Context Stack
 	pushCurrentContext(thisPtr);
 
+	// cout << "LuaEnvironment::execute before getglobal, top=" << lua_gettop(getState()) << endl;
+
 	// Load the sandbox code executor _M.eval
 	lua_getglobal(l, "_M");
 	lua_getfield(l, -1, "eval");
+	lua_remove(l, -2);
+
+	// cout << "LuaEnvironment::execute after getfield, top=" << lua_gettop(getState()) << endl;
 
 	// And push the required arguments
 	// The Parameter sequence for calling _M.eval is
 	// 1. The source of the script to be executed
 	// 2. The name of the script
 	// 3. The Scriptable::eType of the Vassal Object that the script is running against
-	// 4. A (void *) ptr to the to the Proxy object that wraps the Vassal Object.
+	// 4. A (void *) ptr to the to the Vassal Object.
 	// 5. A (void *) ptr to the current ContextFrame containing all Proxy Objects used in this script invocation
 	//
-	lua_pushstring(l, script->getExecutableSource().c_str());			 // Script code
-	lua_pushstring(l, script->getName().c_str());						 // Script name
-	lua_pushinteger(l, thisPtr->getScriptableType());	 				 // Context type
-	lua_pushlightuserdata(l, ((void *) thisPtr));    				     // Context reference
-	lua_pushlightuserdata(l, ((void *) getCurrentContext().get()));      // Context Framereference
+	lua_pushstring(l, script->getExecutableSource().c_str());	// Script code
+	lua_pushstring(l, script->getName().c_str());				// Script name
+	lua_pushinteger(l, thisPtr->getScriptableType());	 		// Context type
+	lua_pushlightuserdata(l, ((void *) thisPtr));    		// Context reference
+	lua_pushlightuserdata(l, ((void *) getCurrentContext().get())); // ContextFrame reference
+
+	// cout << "LuaEnvironment::execute before pcall, top=" << lua_gettop(getState()) << endl;
 
 	// Call the compiled code.
-	if (lua_pcall(l, 5, LUA_MULTRET, 0)) {
-		// Something went wrong with the sandbox execution
-		string error = "Sandbox Failure";
-		error.append(lua_tostring(l, -1));
-		script->setError(error);
-		script->setResult("");
-		lua_pop(l, 1);
+	//
+	// lua_pcall will return 0 if the sandbox successfully attempts to execute the script (even if the script itself fails)
+	// A non-zero return indicates the sandbox evaluation routine _M.eval failed.
+	// 5 Arguments are passed to _M.eval and 2 returned
+	if (lua_pcall(l, 5, 2, 0) != LUA_OK) {
+		// Something went wrong with the sandbox execution. The only entry returned on the stack should be a string error message
+		// cout << "lua_pcall returned false, stack size =" << lua_gettop(l) << ", top type = " << lua_typename(l, lua_type(l, -1))
+		//		<< endl;
+		translateLuaError (l, result);
+
 	} else {
-		// Sandbox worked
-		if (lua_isnil(l, -2)) {
-			// Expression failed to evaluate
-			script->setError(lua_tostring(l, -1));
-			script->setResult("");
-			lua_pop(l, 2);
+		// cout << "lua_pcall returned LUA_OK, stack size =" << lua_gettop(l) << endl;
+		// cout << "Stack top type = " << lua_typename(l, lua_type(l, -1)) << endl;
+		// cout << "Stack next type = " << lua_typename(l, lua_type(l, -2)) << endl;
+
+		// The Sandbox worked, and attempted to run the script. Success or failure of the script itself is
+		// returned through the stack.
+		// Top of Stack = status. 0 = Success, 1 = Script Error (fixible by script author), 2 = Vassal error
+		// Stack Top-1  = return value for status == 0, or text error message for status != 0
+		// TODO Stack Top-2  = Stack trace or additional error information
+
+		int status = lua_tointeger(l, -1);
+		if (status == ScriptResult::eResult_Success) {
+			// Script ran successfully
+			// TODO Implying that Script & Expressions can only return String value???
+			result.setResultValue(make_unique<TValue>(lua_tostring(l, -1)));
 		} else {
-			// Expression evaluated
-			script->setResult(lua_tostring(l, -1));
-			script->setError("");
-			lua_pop(l, 1);
+			// Script failed to run
+			translateLuaError (l, result);
 		}
+
 	}
+
+	// Clear the Lua stack of anything remaining
+	lua_pop(l, lua_gettop(l));
+	lua_pop(l, lua_gettop(l));
 
 	// Pop the last context frame back off the stack, replacing the current frame and releasing all it's associated Proxy objects.
 	popCurrentContext();
@@ -422,6 +504,10 @@ void LuaEnvironment::execute(Script *script, Scriptable *thisPtr) {
 
 ProxyFactory LuaEnvironment::getProxyFactory() const {
 	return proxyFactory;
+}
+
+int LuaEnvironment::getCurrentContextLevel() const {
+	return contextStack.size();
 }
 
 // Push a new context frame on to the top of the stack
@@ -446,13 +532,10 @@ unique_ptr<ContextFrame> & LuaEnvironment::getCurrentContext() const {
 	return contextStack.back();
 }
 
-
-// Handle fate errors within the LuaEnvironment
-void LuaEnvironment::luaAssert(lua_State *l, const bool test, const string source, const string message) {
-	if (!test) {
-		lua_pushstring(l, ("Vassal error (" + source + "): " + message).c_str());
-		lua_error(l);
-	}
+// Handle fatal errors within the LuaEnvironment
+void LuaEnvironment::luaAssert(lua_State *l, const bool test, const string source, const string message,
+		const ScriptResult::eResult errorType) {
+	cbAssert(l, test, source, message, errorType);
 }
 
 long LuaEnvironment::incrLuaStepCount() {

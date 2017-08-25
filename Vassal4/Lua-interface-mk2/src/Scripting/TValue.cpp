@@ -11,8 +11,8 @@
 
 using namespace std;
 
-// 	enum eType = {eType_invalid, eType_integer, eType_float, eType_boolean, eType_string, eType_nil, eType_Vobject, eType_Viterator}
-std::string TValue::typeNames[] = {"Invalid", "Integer", "Float", "Boolean", "String", "Nil", "Object", "Iterator"};
+// 	enum eType = {eType_invalid, eType_integer, eType_float, eType_boolean, eType_string, eType_nil, eType_Vobject}
+std::string TValue::typeNames[] = {"Invalid", "Integer", "Float", "Boolean", "String", "Nil", "Object"};
 
 TValue::TValue() {
 	setNil();
@@ -26,17 +26,17 @@ TValue::TValue(int i) {
 	setInteger(i);
 }
 
-TValue::TValue(long int i) {
-	setInteger(i);
-}
+//TValue::TValue(long int i) {
+//	setInteger(i);
+//}
 
-TValue::TValue(long long int i) {
-	setInteger(i);
-}
+//TValue::TValue(long long int i) {
+//	setInteger(i);
+//}
 
-TValue::TValue(double n) {
-	setFloat(n);
-}
+//TValue::TValue(double n) {
+//	setFloat(n);
+//}
 
 TValue::TValue(float n) {
 	setFloat(n);
@@ -140,7 +140,7 @@ void TValue::setBoolean(const bool b) {
 	setType(eType_boolean);
 }
 
-void TValue::setFloat(const double n) {
+void TValue::setFloat(const float n) {
 	value.n = n;
 	setType(eType_float);
 }

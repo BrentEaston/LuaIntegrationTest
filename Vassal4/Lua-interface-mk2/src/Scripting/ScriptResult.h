@@ -18,24 +18,26 @@ public:
 	enum eResult {
 		eResult_Success,
 		eResult_Script_Error,
-		eResult_Interface_Error,
 		eResult_Vassal_Error
 	};
 	ScriptResult();
 	virtual ~ScriptResult();
 
 	bool isSuccessful() const;
+	bool isScriptError() const;
+	bool isVassalError() const;
 
-	int getResultLevel() const;
+	ScriptResult::eResult getResultLevel() const;
 	const std::unique_ptr<TValue> & getResult() const;
-	std::string getError() const;
 
 	void setResultValue (std::unique_ptr<TValue> result);
-	void setScriptError (const std::string error);
-	void setInterfaceError (const std::string error);
-	void setVassalError (const std::string error);
-protected:
+
 	void setError (const std::string error, const ScriptResult::eResult errorLevel);
+	void setScriptError (const std::string error);
+	void setVassalError (const std::string error);
+	std::string getError() const;
+	void clearError();
+protected:
 	void setResultLevel (const ScriptResult::eResult level);
 
 private:

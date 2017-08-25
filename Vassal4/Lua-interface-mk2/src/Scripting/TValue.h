@@ -50,11 +50,11 @@ public:
 
 	// Construct an Integer TValue
 	TValue(int i);
-	TValue(long int i);
-	TValue(long long int i);
+	//TValue(long int i);
+	//TValue(long long int i);
 
 	// Construct a Float TValue
-	TValue(double n);
+	// TValue(double n);
 	TValue(float n);
 
 	// Construct a Boolean TValue
@@ -70,7 +70,6 @@ public:
 	virtual ~TValue();
 
 	eType getType();
-	void setType(const eType type);
 
 	// Return the value as a specific type
 	// The Caller should have used isXxxxxx() to determine the correct type
@@ -99,10 +98,11 @@ public:
 	void setObjectType(const Scriptable::eType type);
 private:
 
+	void setType(const eType type);
 	void setNil();
 	void setInteger(const int i);
 	void setBoolean(const bool b);
-	void setFloat(const double n);
+	void setFloat(const float n);
 	void setString(const std::string s);
 	void setObject(void *p, const Scriptable::eType type);
 	void setPointer(void *p);

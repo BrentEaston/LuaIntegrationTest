@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-internal.h>
 #include "Scripting/TValue.h"
+#include "Piece.h"
 
 namespace {
 
@@ -40,12 +41,119 @@ class TValue_Test : public ::testing::Test {
 
   // Objects declared here can be used by all tests in the test case for Foo.
 
+  void IntTester (const int i) {
+	  	TValue t (i);
+	    EXPECT_EQ (TValue::eType_integer, t.getType());
+	    EXPECT_EQ (i, t.getIntegerValue());
+	    EXPECT_TRUE(t.isInteger());
+	    EXPECT_FALSE(t.isNil());
+	    EXPECT_FALSE(t.isFloat());
+	    EXPECT_FALSE(t.isBoolean());
+	    EXPECT_FALSE(t.isString());
+	    EXPECT_FALSE(t.isObject());
+	    EXPECT_EQ (std::to_string(i), t.getValueAsString());
+	    EXPECT_EQ ("Integer: "+std::to_string(i), t.toString());
+  }
+
+  void FloatTester (const float f) {
+	  	TValue t (f);
+	    EXPECT_EQ (TValue::eType_float, t.getType());
+	    EXPECT_EQ (f, t.getFloatValue());
+	    EXPECT_FALSE(t.isInteger());
+	    EXPECT_FALSE(t.isNil());
+	    EXPECT_TRUE(t.isFloat());
+	    EXPECT_FALSE(t.isBoolean());
+	    EXPECT_FALSE(t.isString());
+	    EXPECT_FALSE(t.isObject());
+	    EXPECT_EQ (std::to_string(f), t.getValueAsString());
+	    EXPECT_EQ ("Float: "+std::to_string(f), t.toString());
+  }
+
+  void BoolTester (const bool b) {
+	  	TValue t (b);
+	    EXPECT_EQ (TValue::eType_boolean, t.getType());
+	    EXPECT_EQ (b, t.getBooleanValue());
+	    EXPECT_FALSE(t.isInteger());
+	    EXPECT_FALSE(t.isNil());
+	    EXPECT_FALSE(t.isFloat());
+	    EXPECT_TRUE(t.isBoolean());
+	    EXPECT_FALSE(t.isString());
+	    EXPECT_FALSE(t.isObject());
+	    EXPECT_EQ (std::to_string(b), t.getValueAsString());
+	    EXPECT_EQ ("Boolean: "+std::to_string(b), t.toString());
+  }
+
+  void StringTester (const std::string s) {
+	  	TValue t (s);
+	    EXPECT_EQ (TValue::eType_string, t.getType());
+	    EXPECT_EQ (s, t.getStringValue());
+	    EXPECT_FALSE(t.isInteger());
+	    EXPECT_FALSE(t.isNil());
+	    EXPECT_FALSE(t.isFloat());
+	    EXPECT_FALSE(t.isBoolean());
+	    EXPECT_TRUE(t.isString());
+	    EXPECT_FALSE(t.isObject());
+	    EXPECT_EQ (s, t.getValueAsString());
+	    EXPECT_EQ ("String: "+s, t.toString());
+  }
+
+
 
 };
 
-TEST_F(TValue_Test, 1ArgConstructor) {
-	  EXPECT_EQ (1, 2-1);
+TEST_F(TValue_Test, IntConstructor) {
+	IntTester (1234);
+	IntTester (0);
+	IntTester (-5);
 };
 
+TEST_F (TValue_Test, NilConstructor) {
+	TValue *t = new TValue ();
+	EXPECT_EQ (TValue::eType_nil, t->getType());
+	EXPECT_FALSE(t->isInteger());
+    EXPECT_TRUE(t->isNil());
+    EXPECT_FALSE(t->isFloat());
+	EXPECT_FALSE(t->isBoolean());
+	EXPECT_FALSE(t->isString());
+	EXPECT_FALSE(t->isObject());
+	EXPECT_EQ ("", t->getValueAsString());
+	EXPECT_EQ ("Nil: ", t->toString());
+
+	delete t;
+}
+
+TEST_F(TValue_Test, FloatConstructor) {
+	FloatTester (1234.2);
+	FloatTester (0.0);
+	FloatTester (-5.234);
+};
+
+TEST_F(TValue_Test, BooleanConstructor) {
+	BoolTester (true);
+	BoolTester (false);
+};
+
+TEST_F(TValue_Test, StringConstructor) {
+	StringTester ("test1");
+	StringTester ("");
+};
+
+TEST_F(TValue_Test, ObjectConstructor) {
+	Piece *p = new Piece ("xyzzy", 4);
+	TValue t ((void *) p, p->getScriptableType());
+	EXPECT_EQ (TValue::eType_Vobject, t.getType());
+	EXPECT_FALSE(t.isInteger());
+    EXPECT_FALSE(t.isNil());
+    EXPECT_FALSE(t.isFloat());
+	EXPECT_FALSE(t.isBoolean());
+	EXPECT_FALSE(t.isString());
+	EXPECT_TRUE(t.isObject());
+	EXPECT_EQ ("", t.getValueAsString());
+	EXPECT_EQ ("Object: ", t.toString());
+	EXPECT_EQ (p->getScriptableType(), t.getObjectType());
+	EXPECT_EQ ((void *) p, t.getObjectPointer());
+
+
+}
 } // Namespace
 

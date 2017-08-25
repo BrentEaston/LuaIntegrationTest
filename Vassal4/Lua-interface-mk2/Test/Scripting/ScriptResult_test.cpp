@@ -5,8 +5,11 @@
  *      Author: Brent
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <Scripting/ScriptResult.h>
+#include <Scripting/TValue.h>
+#include <memory>
+#include <string>
 
 // The fixture for testing class Foo.
 class ScriptResult_test: public ::testing::Test {
@@ -38,9 +41,43 @@ protected:
 	// Objects declared here can be used by all tests in the test case for Foo.
 };
 
-TEST(ScriptResult_test, test1) {
-	int a = 1;
-	int b = 2;
-	EXPECT_EQ(1, b - 1);
+TEST(ScriptResult_test, BasicTests) {
+	ScriptResult result;
+	EXPECT_EQ (result.getResultLevel(), ScriptResult::eResult_Success);
+	EXPECT_TRUE (result.isSuccessful());
+	EXPECT_FALSE (result.isScriptError());
+	EXPECT_FALSE (result.isVassalError());
+	EXPECT_EQ (result.getError(), "");
+	EXPECT_TRUE (result.getResult()->isNil());
+
+
+	std::string scriptError = "Error in script";
+	result.setScriptError(scriptError);
+	EXPECT_EQ (result.getResultLevel(), ScriptResult::eResult_Script_Error);
+	EXPECT_FALSE (result.isSuccessful());
+	EXPECT_TRUE (result.isScriptError());
+	EXPECT_FALSE (result.isVassalError());
+	EXPECT_EQ (result.getError(), scriptError);
+
+	result.clearError();
+	EXPECT_TRUE (result.isSuccessful());
+	EXPECT_FALSE (result.isScriptError());
+	EXPECT_FALSE (result.isVassalError());
+
+	std::string vassalError = "Error in Vassal";
+	result.setVassalError(vassalError);
+	EXPECT_EQ (result.getResultLevel(), ScriptResult::eResult_Vassal_Error);
+	EXPECT_FALSE (result.isSuccessful());
+	EXPECT_FALSE (result.isScriptError());
+	EXPECT_TRUE (result.isVassalError());
+	EXPECT_EQ (result.getError(), vassalError);
+
+	result.setResultValue(std::make_unique<TValue> (123));
+	EXPECT_EQ (result.getResultLevel(), ScriptResult::eResult_Success);
+	EXPECT_TRUE (result.isSuccessful());
+	EXPECT_EQ (result.getError(), "");
+	EXPECT_TRUE (result.getResult()->isInteger());
+
+
 }
 
