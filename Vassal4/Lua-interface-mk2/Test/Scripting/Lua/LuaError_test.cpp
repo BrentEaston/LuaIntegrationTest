@@ -1,24 +1,24 @@
 /*
- * StackFrame_test.cpp
+ * LuaError_test.cpp
  *
- *  Created on: 15 Aug. 2017
+ *  Created on: 24 Aug. 2017
  *      Author: Brent
  */
 
 #include "gtest/gtest.h"
-#include "StackFrame.h"
+#include <Scripting/Lua/LuaError.h>
 
 // The fixture for testing class Foo.
-class StackFrame_test: public ::testing::Test {
+class LuaError_test: public ::testing::Test {
 protected:
 	// You can remove any or all of the following functions if its body
 	// is empty.
 
-	StackFrame_test() {
+	LuaError_test() {
 		// You can do set-up work for each test here.
 	}
 
-	virtual ~StackFrame_test() {
+	virtual ~LuaError_test() {
 		// You can do clean-up work that doesn't throw exceptions here.
 	}
 
@@ -38,7 +38,7 @@ protected:
 	// Objects declared here can be used by all tests in the test case for Foo.
 };
 
-TEST(StackFrame_test, test1) {
+TEST(LuaError_test, test1) {
 	int a = 1;
 	int b = 2;
 	EXPECT_EQ(1, b - 1);
