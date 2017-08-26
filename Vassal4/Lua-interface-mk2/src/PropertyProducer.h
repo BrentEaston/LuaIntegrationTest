@@ -16,7 +16,7 @@
 class PropertyProducer {
 public:
 	virtual ~PropertyProducer() {};
-	virtual std::string getProperty(const std::string propertyName) const=0;
+	virtual std::string get(const std::string propertyName) const=0;
 };
 
 #endif /* PROPERTYPRODUCER_H_ */

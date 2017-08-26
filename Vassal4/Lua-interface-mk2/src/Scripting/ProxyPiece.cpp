@@ -40,8 +40,8 @@ void ProxyPiece::registerProxyInfo() {
 		auto def = make_unique<ProxyDefinition> (PROXY_NAME, PROXY_TYPE);
 		// piece.getName(). Return piece name. No arguments.
 		def -> registerOperation("getName");
-		// piece.getProperty(name). Return the value of property name. Argument 1 name of property.
-		def -> registerOperation("getProperty")->addArgument(TValue::eType_string);
+		// piece.get(name). Return the value of property name. Argument 1 name of property.
+		def -> registerOperation("get")->addArgument(TValue::eType_string);
 		// piece.getMap(). Return the Map this piece is currently place on. No Arguments. May return nil.
 		def -> registerOperation("getMap");
 		registerProxy(def);
@@ -72,9 +72,9 @@ void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TVal
 		result.setResultValue(make_unique<TValue> (getPiece()->getName()));
 		//result = make_unique<TValue>(getPiece()->getName());
 		return;
-	} else if (operation == "getProperty") {
-		//result = make_unique<TValue>(getPiece()->getProperty(args[0]->getValueAsString()));
-		result.setResultValue(make_unique<TValue> (getPiece()->getProperty(args[0]->getValueAsString())));
+	} else if (operation == "get") {
+		//result = make_unique<TValue>(getPiece()->get(args[0]->getValueAsString()));
+		result.setResultValue(make_unique<TValue> (getPiece()->get(args[0]->getValueAsString())));
 		return ;
 	} else if (operation == "getMap") {
 		// // cout << "In ProxyPiece::performOperation - getMap, piece=" << getPiece() << endl;

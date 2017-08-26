@@ -27,7 +27,7 @@ public:
 	std::string getName() const;
 	void setName(const std::string &myName);
 
-	std::string getProperty(const std::string propertyName) const;
+	std::string get(const std::string propertyName) const;
 
 	eType getScriptableType () const;
 

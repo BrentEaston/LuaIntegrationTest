@@ -40,7 +40,7 @@ void ProxyMap::registerProxyInfo() {
 	if (!isRegistered(PROXY_NAME)) {
 		auto def = make_unique<ProxyDefinition> (PROXY_NAME, PROXY_TYPE);
 		def -> registerOperation("getName");
-		def -> registerOperation("getProperty")->addArgument(TValue::eType_string);
+		def -> registerOperation("get")->addArgument(TValue::eType_string);
 		def -> registerOperation("getVisiblePieces");
 		def -> registerOperation("getVisiblePiecesNext");
 		registerProxy(def);
@@ -71,9 +71,9 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 		result.setResultValue(make_unique<TValue>(getMap()->getName()));
 		return;
 
-	} else if (operation == "getProperty") {
-		//result = make_unique<TValue>(getMap()->getProperty(args[0]->getValueAsString()));
-		result.setResultValue (make_unique<TValue> (getMap()->getProperty(args[0]->getValueAsString())));
+	} else if (operation == "get") {
+		//result = make_unique<TValue>(getMap()->get(args[0]->getValueAsString()));
+		result.setResultValue (make_unique<TValue> (getMap()->get(args[0]->getValueAsString())));
 		return ;
 
 	} else if (operation == "getVisiblePieces") {

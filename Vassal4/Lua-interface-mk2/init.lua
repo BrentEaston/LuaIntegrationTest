@@ -69,7 +69,7 @@ function CreateObjectProxy (object, objectName)
   proxymt.__index =
     function (t, n)
       if object[n] == nil then
-        return object:getProperty(n)
+        return object:get(n)
       end
       return object[n]
     end
@@ -94,9 +94,9 @@ function Piece:new (type, ptr)
   return CreateObjectProxy (piece, "Piece")
 end
 
-function Piece:getProperty(name)
-  -- print ('In Lua:Piece:getProperty: '..tostring(name))
-  return _V_callback (self.type, self.ptr, "getProperty", name)
+function Piece:get(name)
+  -- print ('In Lua:Piece:get: '..tostring(name))
+  return _V_callback (self.type, self.ptr, "get", name)
 end
 
 function Piece:getName()
@@ -126,9 +126,9 @@ function Map:new (type, ptr)
   return CreateObjectProxy (map, "Map")
 end
 
-function Map:getProperty(name)
-  -- print ('In Lua:Map:getProperty')
-  return _V_callback (self.type, self.ptr, "getProperty", name)
+function Map:get(name)
+  -- print ('In Lua:Map:get')
+  return _V_callback (self.type, self.ptr, "get", name)
 end
 
 function Map:getName()
@@ -357,11 +357,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
 
   -- Sandboxed __index metamethod to make global environment table read only
   local function lock_newindex(t, n, v)
+    print ('in lock_newindex for '..tostring(n))
     raiseError("Attempting to set Global Variable '" .. tostring(n) .. "' to "..tostring(v)..".", _V_SCRIPT_ERROR, 2)
   end
 
   -- Sandboxed __newindex metamethod to warn prevent users trying to access undefined global environment entries
   local function lock_index(t, n)
+    print ('in lock_index for '..tostring(n))
     if _V_env[n] == nil then
       raiseError("Attempting to read undefined value '" .. tostring(n) .. "'.", _V_SCRIPT_ERROR, 2)
     end

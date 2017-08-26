@@ -54,7 +54,7 @@ Scriptable::eType Piece::getScriptableType() const {
 	return Scriptable::eType_Piece;
 }
 
-std::string Piece::getProperty(const std::string propertyName) const {
+std::string Piece::get(const std::string propertyName) const {
 
 	if (propertyName == "Level") {
 		return  std::to_string(getLevel());

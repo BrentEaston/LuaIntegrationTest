@@ -39,8 +39,8 @@ Scriptable::eType Map::getScriptableType() const {
 	return Scriptable::eType_Map;
 }
 
-std::string Map::getProperty(const std::string propertyName) const {
-	cout << "   in Map::getProperty looking up property name " << propertyName << " = " << getName() << endl;
+std::string Map::get(const std::string propertyName) const {
+	cout << "   in Map::get looking up property name " << propertyName << " = " << getName() << endl;
 	if (propertyName == "Name") {
 		return getName();
 	} else if (propertyName == "runScript") {
