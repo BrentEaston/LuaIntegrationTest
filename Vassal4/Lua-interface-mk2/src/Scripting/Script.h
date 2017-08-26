@@ -31,7 +31,7 @@ public:
 
 	eReturnType getReturnType() const;
 
-	void execute (Scriptable *context, ScriptResult &result);
+	void execute (const Scriptable *context, ScriptResult &result);
 	void validate (ScriptResult &result);
 
 	std::string getName() const;

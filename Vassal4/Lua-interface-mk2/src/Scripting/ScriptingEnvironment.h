@@ -61,7 +61,7 @@ public:
 	 * \return boolean set to true if there was no run-time error
 	 *
 	 */
-	virtual void execute (Script *script, Scriptable *context, ScriptResult &result)=0;
+	virtual void execute (Script *script, const Scriptable *context, ScriptResult &result)=0;
 
 protected:
 	bool initialised;

@@ -457,19 +457,22 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   -- Reset the context to what it was before this call.
   popThis()
 
-  -- Error! return the error message
-  -- TODO Handle different error types
+  -- Error! return the error object to LuaEnvironment
   if not ok then
---print ('_M.eval: Function failed to run, returning 2 args, nil and error message='..tostring(ret[1]))
-    raiseError ( ret[1], _V_SCRIPT_ERROR , 2, name)
+    -- print ('_M.eval: Function failed to run at context level '..(#_V_contextStack+1))
+    -- print (tostring(ret[1].error))
+    --raiseError ( ret[1], _V_SCRIPT_ERROR , 2, name)
+    return ret[1], _V_SCRIPT_ERROR
   end
+
+  -- print ('_M.eval: Function succeeded at context level '..(#_V_contextStack+1))
 
   -- Success! Return all results. Return an empty string result if there where no results.
   if (#ret == 0) then
---print ('_M.eval: Function succeeded, no return value, returning 1 args=empty string')
+    -- print ('_M.eval: Function succeeded, no return value, returning 1 args=empty string')
     return "", _V_SUCCESS
   else
---print ('_M.eval: Function succeeded, returning '..tostring(#ret)..' args')
+    -- print ('_M.eval: Function succeeded, returning '..tostring(#ret)..' args')
     return ret[1], _V_SUCCESS
   end
 end

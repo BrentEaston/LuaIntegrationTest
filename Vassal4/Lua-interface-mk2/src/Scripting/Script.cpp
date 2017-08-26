@@ -70,7 +70,7 @@ std::string Script::getName() const {
  * Evaluate the script using the supplied context.  VassalContext provides a getProperty(name) call
  * that will be used by the evaluation environment to evaluate Vassal properties referenced in the script
  */
-void Script::execute (Scriptable *context, ScriptResult &result) {
+void Script::execute (const Scriptable *context, ScriptResult &result) {
 
 	// Execute the script
 	// ScriptingFactory::getInstance() -> getEnvironment() -> execute(this, context);

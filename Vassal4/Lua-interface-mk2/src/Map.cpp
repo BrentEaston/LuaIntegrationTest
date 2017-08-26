@@ -5,10 +5,13 @@
  *      Author: Brent
  */
 
-#include "Map.h"
-
-#include <iostream>
+#include <Map.h>
+#include <Scripting/Script.h>
+#include <Scripting/ScriptingEnvironment.h>
+#include <Scripting/ScriptingFactory.h>
+#include <Scripting/ScriptResult.h>
 #include <memory>
+#include <iostream>
 
 using namespace std;
 
@@ -37,9 +40,18 @@ Scriptable::eType Map::getScriptableType() const {
 }
 
 std::string Map::getProperty(const std::string propertyName) const {
-	// cout << "   in Map::getProperty looking up property name " << propertyName << " = " << getName() << endl;
+	cout << "   in Map::getProperty looking up property name " << propertyName << " = " << getName() << endl;
 	if (propertyName == "Name") {
 		return getName();
+	} else if (propertyName == "runScript") {
+		string s = "local x = 10\n"
+				"local y = 20\n"
+				"print('Some output from nested script')\n"
+				"setmetatable(_ENV, {})";
+		ScriptingEnvironment *environment = ScriptingFactory::getInstance() -> getEnvironment().get();
+		Script script (environment, s, "MapTestLower");
+		ScriptResult result;
+		script.execute(this, result);
 	}
 	return "v_undefined";
 }

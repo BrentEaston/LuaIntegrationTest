@@ -121,6 +121,7 @@ int main() {
 				//"local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end\n"
 				"local startClock, startTime = os.clock(), os.time()\n"
 				//"\n"
+				"local x = this:getMap().runScript\n"
 				//"setmetatable(this, {})"
 				//"this.junk = 10"
 				//"print ('this:getName()='..tostring(this:getName()))"
@@ -157,7 +158,7 @@ int main() {
 				//"print('---Script 1: Map Name='..m:getName())\n"
 				//"print('---Script 1: Map name property='..m:getProperty('Name'))";
 		;
-		Script exp1 (environment, s1, "MapTest");
+		Script exp1 (environment, s1, "MapTestUpper");
 		//Expression exp1 ("this:getProperty('Name')", "thisTest");
 
 

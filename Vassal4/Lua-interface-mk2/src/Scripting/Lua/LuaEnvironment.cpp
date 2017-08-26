@@ -50,11 +50,12 @@ void cbAssert(lua_State *l, const bool test, const string source, const string m
 
 	if (!test) {
 		// Create an error object on the Stack and call lua_error
-		//cout << "cbAssert: Error raised" << endl;
+		// cout << "cbAssert: Error raised=" << message << endl;
 		lua_newtable(l);
 		lua_pushinteger(l, errorLevel);
 		lua_setfield(l, -2, "level");
-		lua_pushstring(l, (source + ": " + message).c_str());
+		string error = (source.length() == 0) ? message : source + ": " + message;
+		lua_pushstring(l, error.c_str());
 		lua_setfield(l, -2, "error");
 		lua_error(l);
 	}
@@ -77,10 +78,11 @@ void cbAssert(lua_State *l, const bool test, const string source, const string m
  * Read the arguments, convert a String error to an error table and call lua_error
  */
 static int raiseError(lua_State *l) {
-	// cout << "In raiseError" << endl;
+	// cout << "raiseError: In raiseError" << endl;
 
 	LuaError error (l);
 	error.build();
+	// cout << "raiseError: Error=" << error.formatError() << endl;
 	error.throwError();
 
 	return 0;
@@ -372,27 +374,23 @@ const string LuaEnvironment::getInitialisationError() const {
 
 /*
  * Translate an Error object returned from Lua into a ScriptResult.
- *
- * Lua should have returned an error object as the second item on the stack. There can be two kinds:
- * 1. If it is a Lua table, then it has two entries, "level" contains the error level and "error" contains the
- * error message.
- * 2. If is is a String, it is a raw error message and we assume it is a Vassal Error
- * an Error object below that. An Error object is a table with
  */
-void LuaEnvironment::translateLuaError(lua_State *l, ScriptResult &result) {
+void LuaEnvironment::handleScriptError(lua_State *l, ScriptResult &result) {
 
-	if (lua_isstring(l, -1)) {
-		string error = lua_tostring(l, -1);
-		result.setVassalError(error);
+	// cout << "LuaEnvironment::handleScriptError: context level=" << getCurrentContextLevel() << endl;
+	// Get error details off stack
+	LuaError error (l);
+	error.build();
 
-	} else if (lua_istable(l, -1)) {
-		LuaError luaError (l);
-		luaError.build();
-		result.setError(luaError.formatError(), luaError.getErrorLevel());
-
-	} else {
-		string errorType = lua_typename(l, lua_type(l, -1));
-		result.setVassalError("Unknown Error object returned from Lua: "+errorType);
+	// Back to the top level script?
+	if (getCurrentContextLevel() == 1) {
+		// Yes, Set the error details into the result
+		result.setError(error.formatError(), error.getErrorLevel());
+	}
+	else {
+		// No, Pass error up to the next level
+		popCurrentContext();
+		error.throwError();
 	}
 
 }
@@ -419,7 +417,7 @@ void LuaEnvironment::validate(Script *expression, ScriptResult &result) {
 	return;
 }
 
-void LuaEnvironment::execute(Script *script, Scriptable *thisPtr, ScriptResult &result) {
+void LuaEnvironment::execute(Script *script, const Scriptable *thisPtr, ScriptResult &result) {
 	lua_State *l = getState();
 
 	// cout << "LuaEnvironment::execute start, top=" << lua_gettop(getState()) << endl;
@@ -456,21 +454,20 @@ void LuaEnvironment::execute(Script *script, Scriptable *thisPtr, ScriptResult &
 	lua_pushlightuserdata(l, ((void *) thisPtr));    		// Context reference
 	lua_pushlightuserdata(l, ((void *) getCurrentContext().get())); // ContextFrame reference
 
-	// cout << "LuaEnvironment::execute before pcall, top=" << lua_gettop(getState()) << endl;
-
+	// cout << "LuaEnvironment::execute before pcall, script: " << script->getName() << endl;
 	// Call the compiled code.
 	//
 	// lua_pcall will return 0 if the sandbox successfully attempts to execute the script (even if the script itself fails)
 	// A non-zero return indicates the sandbox evaluation routine _M.eval failed.
 	// 5 Arguments are passed to _M.eval and 2 returned
 	if (lua_pcall(l, 5, 2, 0) != LUA_OK) {
-		// Something went wrong with the sandbox execution. The only entry returned on the stack should be a string error message
-		// cout << "lua_pcall returned false, stack size =" << lua_gettop(l) << ", top type = " << lua_typename(l, lua_type(l, -1))
-		//		<< endl;
-		translateLuaError (l, result);
+		// cout << "LuaEnvironment::execute pcall failed pcall, script: " << script->getName() << endl;
+
+		handleScriptError (l, result);
 
 	} else {
-		// cout << "lua_pcall returned LUA_OK, stack size =" << lua_gettop(l) << endl;
+		// cout << "LuaEnvironment::execute pcall succeeded, script: " << script->getName() << endl;
+
 		// cout << "Stack top type = " << lua_typename(l, lua_type(l, -1)) << endl;
 		// cout << "Stack next type = " << lua_typename(l, lua_type(l, -2)) << endl;
 
@@ -481,22 +478,24 @@ void LuaEnvironment::execute(Script *script, Scriptable *thisPtr, ScriptResult &
 		// TODO Stack Top-2  = Stack trace or additional error information
 
 		int status = lua_tointeger(l, -1);
+		// cout << "LuaEnvironment::execute: status returned " << status << endl;
+		lua_pop(l, 1);
+
 		if (status == ScriptResult::eResult_Success) {
 			// Script ran successfully
 			// TODO Implying that Script & Expressions can only return String value???
 			result.setResultValue(make_unique<TValue>(lua_tostring(l, -1)));
 		} else {
-			// Script failed to run
-			translateLuaError (l, result);
+			// Script failed to run correctly
+			handleScriptError (l, result);
 		}
 
 	}
 
 	// Clear the Lua stack of anything remaining
 	lua_pop(l, lua_gettop(l));
-	lua_pop(l, lua_gettop(l));
 
-	// Pop the last context frame back off the stack, replacing the current frame and releasing all it's associated Proxy objects.
+	// Pop the latest context frame off the stack, replacing the current frame and releasing all it's associated Proxy objects.
 	popCurrentContext();
 
 	return;
@@ -510,15 +509,19 @@ int LuaEnvironment::getCurrentContextLevel() const {
 	return contextStack.size();
 }
 
-// Push a new context frame on to the top of the stack
-void LuaEnvironment::pushCurrentContext(Scriptable *context) {
+/*
+ * Create a new Context Frame for this invocation and push it on to the top of the context stack
+ */
+void LuaEnvironment::pushCurrentContext(const Scriptable *context) {
 	contextStack.push_back(make_unique<ContextFrame>(context));
 	//currentContextFrame = make_unique<ContextFrame> (context);
-	// cout << "LuaEnvironment::pushCurrentContext Created new context Frame at " << currentContextFrame.get() << endl;
+	// cout << "LuaEnvironment::pushCurrentContext, size now " << contextStack.size() << endl;
 
 }
 
-// Pop the top context off the top.
+/*
+ * Pop the current Context Frame off the stack
+ */
 void LuaEnvironment::popCurrentContext() {
 	contextStack.pop_back();
 
@@ -526,17 +529,16 @@ void LuaEnvironment::popCurrentContext() {
 	if (contextStack.size() == 0) {
 		resetLuaStepCount();
 	}
+	// cout << "LuaEnvironment::popCurrentContext, size now " << contextStack.size() << endl;
 }
 
+/*
+ * Return the current (latest) context frame
+ */
 unique_ptr<ContextFrame> & LuaEnvironment::getCurrentContext() const {
 	return contextStack.back();
 }
 
-// Handle fatal errors within the LuaEnvironment
-void LuaEnvironment::luaAssert(lua_State *l, const bool test, const string source, const string message,
-		const ScriptResult::eResult errorType) {
-	cbAssert(l, test, source, message, errorType);
-}
 
 long LuaEnvironment::incrLuaStepCount() {
 	return ++luaStepCount;

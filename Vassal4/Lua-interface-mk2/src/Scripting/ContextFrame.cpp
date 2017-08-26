@@ -17,7 +17,7 @@ ContextFrame::ContextFrame() {
 }
 
 // Create a new Context Frame containing just a Proxy for one Scriptable
-ContextFrame::ContextFrame(Scriptable *thisPtr) {
+ContextFrame::ContextFrame(const Scriptable *thisPtr) {
 	// cout << "ContextFrame::ContextFrame" << endl;
 	// cout << "ContextFrame::ContextFrame Create frame containing proxy for object at " << thisPtr << endl;
 	getProxy(thisPtr);
@@ -27,7 +27,7 @@ ContextFrame::~ContextFrame() {
 	// cout << "ContextFrame::~ContextFrame" << endl;
 }
 
-std::unique_ptr<Proxy> const & ContextFrame::getProxy(Scriptable *scriptable) {
+std::unique_ptr<Proxy> const & ContextFrame::getProxy(const Scriptable *scriptable) {
 	return getProxy (scriptable->getScriptableType(), (void *) scriptable);
 }
 

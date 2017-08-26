@@ -34,16 +34,14 @@ public:
 
 	/* Implementation of ScriptingEnvironment */
 	void validate (Script *script, ScriptResult &result);
-	void execute (Script *script, Scriptable *context, ScriptResult &result);
+	void execute (Script *script, const Scriptable *context, ScriptResult &result);
 
 	ProxyFactory getProxyFactory() const;
-
-	void luaAssert(lua_State *l, const bool test, const std::string source, const std::string message, const ScriptResult::eResult errorType);
 
 	virtual const bool isInitialised() const;
 	virtual const std::string getInitialisationError() const;
 
-	void pushCurrentContext(Scriptable *context);
+	void pushCurrentContext(const Scriptable *context);
 	void popCurrentContext();
 	std::unique_ptr<ContextFrame> & getCurrentContext() const;
 	int getCurrentContextLevel() const;
@@ -60,7 +58,7 @@ public:
 	void resetLuaStepCount();
 private:
 
-	void translateLuaError (lua_State *l, ScriptResult &result);
+	void handleScriptError (lua_State *l, ScriptResult &result);
 
 	/** The Global Lua state */
 	lua_State *state;

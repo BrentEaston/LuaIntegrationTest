@@ -21,13 +21,13 @@
 class ContextFrame {
 public:
 	ContextFrame();
-	ContextFrame(Scriptable *thisPtr);
+	ContextFrame(const Scriptable *thisPtr);
 	virtual ~ContextFrame();
 
 	/** Create, or find an existing Proxy for a given Scriptable supplied by Vassal. Scriptables are generally provided to us and are owned by Vassal,
 	 * hence the shared_ptr.
 	 */
-	std::unique_ptr<Proxy> const & getProxy(Scriptable *scriptable);
+	std::unique_ptr<Proxy> const & getProxy(const Scriptable *scriptable);
 
 	/** Create, or find an existing Proxy for a raw scriptable pointer and type supplied from the user script.
 	 *
