@@ -29,8 +29,9 @@ public:
 	string getName() const;
 	void setName(const string &myName);
 
-	string get(const string propertyName) const;
-	void set (const string propertyName, TValue value);
+	TValue *get(const string id) const;
+	void set (const string id, TValue value);
+	TValue *properties() const;
 
 	eType getScriptableType () const;
 

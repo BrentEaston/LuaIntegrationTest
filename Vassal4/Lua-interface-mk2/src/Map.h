@@ -13,16 +13,20 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 class Map: public Scriptable {
 public:
 	Map(const std::string name);
 	Map(Map *map);
 	virtual ~Map();
 
-	std::string getName() const;
+	string getName() const;
 	void setName(const std::string &myName);
 
-	std::string get(const std::string propertyName) const;
+	TValue *get(const std::string propertyName) const;
+	void set (const string id, TValue value);
+	TValue *properties() const;
 
 	eType getScriptableType () const;
 

@@ -52,22 +52,26 @@ Scriptable::eType Piece::getScriptableType() const {
 	return Scriptable::eType_Piece;
 }
 
-std::string Piece::get(const std::string propertyName) const {
+TValue *Piece::get(const std::string propertyName) const {
 
 	if (propertyName == "Level") {
-		return  std::to_string(getLevel());
+		return  new TValue(getLevel());
 	}
 	else if (propertyName == "Name") {
-		return getName();
+		return new TValue(getName());
 	}
 	else if (propertyName == "visible") {
-		return "true";
+		return new TValue(true);
 	}
-	return "v_undefined";
+	return new TValue;
 }
 
 void Piece::set (const string propertyName, TValue value) {
 	cout << "Piece " << myName << ": Set property " << propertyName << " to value " << value.toString() << endl;
+}
+
+TValue *Piece::properties() const {
+	return new TValue();
 }
 
 void Piece::setMap (Map *map) {

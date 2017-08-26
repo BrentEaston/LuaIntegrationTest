@@ -39,10 +39,10 @@ Scriptable::eType Map::getScriptableType() const {
 	return Scriptable::eType_Map;
 }
 
-std::string Map::get(const std::string propertyName) const {
+TValue *Map::get(const std::string propertyName) const {
 	cout << "   in Map::get looking up property name " << propertyName << " = " << getName() << endl;
 	if (propertyName == "Name") {
-		return getName();
+		return new TValue(getName());
 	} else if (propertyName == "runScript") {
 		string s = "local x = 10\n"
 				"local y = 20\n"
@@ -53,8 +53,17 @@ std::string Map::get(const std::string propertyName) const {
 		ScriptResult result;
 		script.execute(this, result);
 	}
-	return "v_undefined";
+	return new TValue("");
 }
+
+void Map::set (const string propertyName, TValue value) {
+	cout << "Map " << myName << ": Set property " << propertyName << " to value " << value.toString() << endl;
+}
+
+TValue *Map::properties() const {
+	return new TValue();
+}
+
 
 std::unique_ptr<std::vector<Piece>> Map::getVisiblePieces() {
 

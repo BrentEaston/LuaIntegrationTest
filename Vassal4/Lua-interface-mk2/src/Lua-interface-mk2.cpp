@@ -124,7 +124,7 @@ int main() {
 				//"print('this='..tostring(this))\n"
 				//"print ('--- this.visible ---')\n"
 				//"this.visible = true\n"
-				"local x = this:get('Name')\n"
+				"local x = this.visible\n"
 				"print('x='..tostring(x))"
 				//"print ('--- this.flip(...) ---')\n"
 				//"local y = this:flip('xyzzy')\n"

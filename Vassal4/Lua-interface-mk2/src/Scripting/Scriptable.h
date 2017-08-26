@@ -8,7 +8,7 @@
 #ifndef SCRIPTABLE_H_
 #define SCRIPTABLE_H_
 
-#include <PropertyProducer.h>
+#include <PropertyContainer.h>
 #include <list>
 #include <string>
 
@@ -21,7 +21,7 @@ class Proxy;
  *
  */
 
-class Scriptable: public PropertyProducer {
+class Scriptable: public PropertyContainer {
 public:
 
 	/**
