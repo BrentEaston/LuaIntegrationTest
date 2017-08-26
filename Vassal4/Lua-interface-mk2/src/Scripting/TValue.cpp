@@ -12,7 +12,7 @@
 using namespace std;
 
 // 	enum eType = {eType_invalid, eType_integer, eType_float, eType_boolean, eType_string, eType_nil, eType_Vobject}
-std::string TValue::typeNames[] = {"Invalid", "Integer", "Float", "Boolean", "String", "Nil", "Object"};
+std::string TValue::typeNames[] = {"Invalid", "Any", "Integer", "Float", "Boolean", "String", "Nil", "Object"};
 
 TValue::TValue() {
 	setNil();
@@ -83,7 +83,7 @@ std::string TValue::getValueAsString() {
 		return std::to_string(getFloatValue());
 		break;
 	case eType_boolean:
-		return std::to_string(getBooleanValue());
+		return getBooleanValue() ? "true" : "false";
 		break;
 	case eType_string:
 		return getStringValue();
@@ -186,6 +186,6 @@ bool TValue::isNil() {
 }
 
 // Return a descriptive string value
-std::string TValue::toString() {
+const std::string TValue::toString() {
 	return getTypeName(getType()) + ": " + getValueAsString();
 }

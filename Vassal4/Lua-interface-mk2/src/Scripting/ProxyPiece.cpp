@@ -38,13 +38,19 @@ ProxyPiece::~ProxyPiece() {
 void ProxyPiece::registerProxyInfo() {
 	if (!isRegistered(PROXY_NAME)) {
 		auto def = make_unique<ProxyDefinition> (PROXY_NAME, PROXY_TYPE);
+
 		// piece.getName(). Return piece name. No arguments.
 		def -> registerOperation("getName");
+
 		// piece.get(name). Return the value of property name. Argument 1 name of property.
 		def -> registerOperation("get")->addArgument(TValue::eType_string);
+
+		// piece.set(name, value). Set the property name to value
+		def -> registerOperation("set")->addArgument(TValue::eType_string)->addArgument(TValue::eType_any);
+
 		// piece.getMap(). Return the Map this piece is currently place on. No Arguments. May return nil.
 		def -> registerOperation("getMap");
-		registerProxy(def);
+
 	}
 }
 
@@ -60,6 +66,8 @@ Piece *ProxyPiece::getPiece() {
 
 void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TValue>> &args, ScriptResult &result) {
 
+	// cout << "ProxyPiece::performOperation: operation = [" << operation << "]" << endl;
+
 	// TODO Can this be done as a dispatch table using a map of function pointers?
 
 	// Check that the number and types of arguments are as expected for this operation
@@ -72,18 +80,27 @@ void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TVal
 		result.setResultValue(make_unique<TValue> (getPiece()->getName()));
 		//result = make_unique<TValue>(getPiece()->getName());
 		return;
+
 	} else if (operation == "get") {
 		//result = make_unique<TValue>(getPiece()->get(args[0]->getValueAsString()));
 		result.setResultValue(make_unique<TValue> (getPiece()->get(args[0]->getValueAsString())));
 		return ;
+
 	} else if (operation == "getMap") {
 		// // cout << "In ProxyPiece::performOperation - getMap, piece=" << getPiece() << endl;
 		const Map *map = getPiece()->getMap();
 		// // cout << "map=" << map << endl;
-		//result = make_unique<TValue>((void *) map, map->getScriptableType(), TValue::eType_Vobject);
+		// FIXME Ugly code, how can we make this look better?
 		result.setResultValue (make_unique<TValue> ((void *) map, map->getScriptableType()));
 		return ;
+
+	} else if (operation == "set") {
+
+		// TODO
+		getPiece()->set(args[0]->getStringValue(), *(args[1].get()));
+		result.setResultValue(make_unique<TValue> (""));
+		return;
 	}
-	result.setVassalError("ProxyMap: Unknown operation " + operation);
+	result.setVassalError("ProxyPiece: Unknown operation " + operation);
 	return;
 }

@@ -40,7 +40,12 @@ void ProxyMap::registerProxyInfo() {
 	if (!isRegistered(PROXY_NAME)) {
 		auto def = make_unique<ProxyDefinition> (PROXY_NAME, PROXY_TYPE);
 		def -> registerOperation("getName");
+
 		def -> registerOperation("get")->addArgument(TValue::eType_string);
+
+		// map.set(name, value). Set the property name to value
+		def -> registerOperation("set")->addArgument(TValue::eType_string)->addArgument(TValue::eType_any);
+
 		def -> registerOperation("getVisiblePieces");
 		def -> registerOperation("getVisiblePiecesNext");
 		registerProxy(def);

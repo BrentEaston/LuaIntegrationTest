@@ -58,21 +58,45 @@ end
 -- The following section defines the Lua Object protypes that allow interaction with Vassal Game Objects.
 ---------------------------------------------------------------------------------------------------------
 
-
+-- Create an empty table to use a Proxy for the real object table. Define a metatable with __index and__newindex
+-- methods to re-direct reads and writes to the object appropriately.
+-- Arguments
+--   object     The Object to create the proxy for
+--   objectName
 function CreateObjectProxy (object, objectName)
-  local proxy = {}
-  local proxymt = {}
+  local proxy = {}   -- The Proxy table
+  local proxymt = {} -- The Proxy metatable
+
+  -- Catch attempts to write to the proxy. Writing is only allowed to entries that have a key in the __properties field
+  -- of the target table (defined in the Base class for the object). The property name and value are passed to the
+  -- set method of the appropriate proxy via the C++ callback
   proxymt.__newindex =
     function (t, n, v)
-       raiseError("Vassal Objects are read-only, trying to set "..tostring(n), _V_SCRIPT_ERROR, 2)
+       if object.__properties[n] then
+         _V_callback (object.type, object.ptr, 'set', n, v)
+       else
+         raiseError(object.__name..": Attempt to write undefined property "..tostring(n), _V_SCRIPT_ERROR, 2)
+       end
     end
-  proxymt.__index =
-    function (t, n)
-      if object[n] == nil then
-        return object:get(n)
-      end
+
+  -- Catch attempts to read from the proxy. Reads are re-directed in the following manner:
+  -- 1. If the target exists in the real table, return it.
+  -- 2. If the target exists as an entry in the __properties field of the target, call the get property of the target object to return the property value
+  -- 3. Otherwise, assume the call is to an object method. Call the appropriate method of the target object
+  proxymt.__index = function (t, n)
+    if object[n] then
       return object[n]
+    else
+      if object.__properties[n] then
+       return _V_callback (object.type, object.ptr, 'get', n)
+      else
+        return function (table, ...)
+                 -- print ('In anonymous function')
+                 return _V_callback (object.type, object.ptr, n, ...)
+               end
+      end
     end
+  end
   setmetatable (proxy, proxymt)
   return proxy
 end
@@ -82,7 +106,9 @@ end
 --
 local Piece = {}
 Piece.__index = Piece
+Piece.__name = "Piece"
 Piece.__lock = true
+Piece.__properties = {}
 
 function Piece:new (type, ptr)
   --print('Lua:Piece:new Create new piece, type='..tostring(type)..', ptr='..tostring(ptr))
@@ -94,21 +120,6 @@ function Piece:new (type, ptr)
   return CreateObjectProxy (piece, "Piece")
 end
 
-function Piece:get(name)
-  -- print ('In Lua:Piece:get: '..tostring(name))
-  return _V_callback (self.type, self.ptr, "get", name)
-end
-
-function Piece:getName()
-  --print ('In Lua:Piece:getName')
-  return _V_callback (self.type, self.ptr, "getName")
-end
-
-function Piece:getMap()
-  -- print ('In Lua:Piece:getMap')
-  return _V_callback (self.type, self.ptr, "getMap")
-end
-
 _V_Piece = Piece
 
 --
@@ -116,6 +127,10 @@ _V_Piece = Piece
 --
 local Map = {}
 Map.__index = Map
+Map.__name = "Map"
+Map.__lock = true
+Map.__properties = {}
+
 
 function Map:new (type, ptr)
   -- print('Lua:Map:new, type='..tostring(type)..', ptr='..tostring(ptr))
@@ -126,15 +141,6 @@ function Map:new (type, ptr)
   return CreateObjectProxy (map, "Map")
 end
 
-function Map:get(name)
-  -- print ('In Lua:Map:get')
-  return _V_callback (self.type, self.ptr, "get", name)
-end
-
-function Map:getName()
-  -- print ('In Lua:Map:getName')
-  return _V_callback (self.type, self.ptr, "getName")
-end
 
 function Map:getVisiblePieces()
   -- print ('In Lua:Map:getVisiblePieces')
@@ -357,13 +363,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
 
   -- Sandboxed __index metamethod to make global environment table read only
   local function lock_newindex(t, n, v)
-    print ('in lock_newindex for '..tostring(n))
+    --print ('in lock_newindex for '..tostring(n))
     raiseError("Attempting to set Global Variable '" .. tostring(n) .. "' to "..tostring(v)..".", _V_SCRIPT_ERROR, 2)
   end
 
   -- Sandboxed __newindex metamethod to warn prevent users trying to access undefined global environment entries
   local function lock_index(t, n)
-    print ('in lock_index for '..tostring(n))
+    --print ('in lock_index for '..tostring(n))
     if _V_env[n] == nil then
       raiseError("Attempting to read undefined value '" .. tostring(n) .. "'.", _V_SCRIPT_ERROR, 2)
     end
@@ -464,49 +470,6 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
 end
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ------------------------------------ End Sandbox Code ----------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---
-
-
-
-
-
-
-
 -- End Lua initialisation
-
-
-
-
-
-
-
---

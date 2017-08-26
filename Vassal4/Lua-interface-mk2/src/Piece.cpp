@@ -5,10 +5,8 @@
  *      Author: Brent
  */
 
-#include "Piece.h"
-
+#include <Piece.h>
 #include <iostream>
-#include <string>
 
 using namespace std;
 
@@ -62,7 +60,14 @@ std::string Piece::get(const std::string propertyName) const {
 	else if (propertyName == "Name") {
 		return getName();
 	}
+	else if (propertyName == "visible") {
+		return "true";
+	}
 	return "v_undefined";
+}
+
+void Piece::set (const string propertyName, TValue value) {
+	cout << "Piece " << myName << ": Set property " << propertyName << " to value " << value.toString() << endl;
 }
 
 void Piece::setMap (Map *map) {

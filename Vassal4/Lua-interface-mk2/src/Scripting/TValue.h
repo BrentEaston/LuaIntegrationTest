@@ -24,6 +24,7 @@ public:
 
 	enum eType {
 		eType_invalid,		// The TValue is invalid, it has not been initialised
+		eType_any,			// Not a valid value for an actual TValue, used in parameter lists where the parameter type is unknown
 		eType_integer,		// The TValue contains an integer value
 		eType_float,		// The TValue contains a floating point value
 		eType_boolean,		// The TValue contains a boolean value
@@ -93,7 +94,7 @@ public:
 	bool isObject();
 
 	// Return a descriptive string representation of the value (e.g. 'Integer: 2', 'Float: 3.4', 'String: Abc')
-	std::string toString();
+	const std::string toString();
 
 	void setObjectType(const Scriptable::eType type);
 private:

@@ -82,7 +82,7 @@ static int raiseError(lua_State *l) {
 
 	LuaError error (l);
 	error.build();
-	// cout << "raiseError: Error=" << error.formatError() << endl;
+		// cout << "raiseError: Error=" << error.formatError() << endl;
 	error.throwError();
 
 	return 0;

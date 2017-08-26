@@ -9,25 +9,28 @@
 #define PIECE_H_
 
 #include <Scripting/Scriptable.h>
-#include <memory>
+#include <Scripting/TValue.h>
 #include <string>
+
+using namespace std;
 
 class Map;
 
 class Piece : public Scriptable {
 public:
 	Piece();
-	Piece(const std::string, const int level);
+	Piece(const string, const int level);
 	Piece(Piece *piece);
 	virtual ~Piece();
 
-	std::string toString() const;
+	string toString() const;
 	int getLevel() const;
 	void setLevel(const int myLevel);
-	std::string getName() const;
-	void setName(const std::string &myName);
+	string getName() const;
+	void setName(const string &myName);
 
-	std::string get(const std::string propertyName) const;
+	string get(const string propertyName) const;
+	void set (const string propertyName, TValue value);
 
 	eType getScriptableType () const;
 
@@ -35,7 +38,7 @@ public:
 	const Map *getMap();
 
 protected:
-	std::string myName;
+	string myName;
 	int myLevel;
 	Map *myMap;
 

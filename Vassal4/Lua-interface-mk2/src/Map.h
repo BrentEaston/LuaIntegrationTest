@@ -8,10 +8,10 @@
 #ifndef MAP_H_
 #define MAP_H_
 
+#include <Piece.h>
+#include <memory>
 #include <string>
 #include <vector>
-
-#include "Piece.h"
 
 class Map: public Scriptable {
 public:

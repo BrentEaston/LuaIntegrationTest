@@ -50,7 +50,7 @@ void Proxy::checkOperationArguments(const string proxyName,
 	for (int argIndex = 0; argIndex < ((int) args.size()); argIndex++) {
 		TValue::eType expectedArgType = operation->getArgumentType(argIndex);
 		TValue::eType actualArgType = args.at(argIndex)->getType();
-		if (expectedArgType != actualArgType) {
+		if (expectedArgType != TValue::eType_any && (expectedArgType != actualArgType)) {
 			result.setVassalError("Invalid type for argument " + to_string(argIndex + 1)
 					+ " for " + proxyName + ":" + operationName + ". Expected "
 					+ TValue::getTypeName(expectedArgType) + "("
