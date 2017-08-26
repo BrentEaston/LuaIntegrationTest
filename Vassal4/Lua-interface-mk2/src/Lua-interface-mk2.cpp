@@ -121,7 +121,7 @@ int main() {
 				//"local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end\n"
 				"local startClock, startTime = os.clock(), os.time()\n"
 				//"\n"
-				"local x = this:getMap().runScript\n"
+				"local x = this:flip()\n"
 				//"setmetatable(this, {})"
 				//"this.junk = 10"
 				//"print ('this:getName()='..tostring(this:getName()))"

@@ -167,22 +167,6 @@ end
 
 ------------------------------------ Sandbox Code ----------------------------------------------------
 
--- Convert and error message and level to an Error object and raise the alarm
--- Note that errorMsg may be a relayed error object from a deeper level
---function raiseError (errorMsg, errorLevel)
---  if type(errorMsg) == "table" then
---    errorMsg.level = errorLevel
---    error (errorMsg, 3)
---  else
---    local e = {}
---    local err = errorMsg:gsub('%[string ', '[')
---    e.error = err
---    e.level = errorLevel
---    error(e, 3)
---  end
---end
-
-
 _M = {}
 --- Small library for running Lua code in a sandbox.
 --

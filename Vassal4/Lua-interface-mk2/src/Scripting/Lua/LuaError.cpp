@@ -33,7 +33,7 @@ LuaError::~LuaError() {
  */
 void LuaError::build() {
 
-	// cout << "LuaError::build: Number of args=" << lua_gettop(l) << endl;
+	//cout << "LuaError::build: Number of args=" << lua_gettop(l) << ", arg 1 type=" << lua_typename(l, lua_type(l, 1)) << endl;
 
 	// Handle an error object by itself on top of the stack
 	if (lua_istable (l, -1)) {
@@ -45,6 +45,14 @@ void LuaError::build() {
 
 	int nargs = lua_gettop (l);
 
+	// Handle an error string by itself on top of the stack
+	if (nargs == 1 && lua_isstring(l, 1)) {
+		extractSourceFromString (lua_tostring(l, 1));
+		lua_pop(l, lua_gettop(l));
+		return;
+	}
+
+	// Otherwise must be 3 or 4 args : Error object, error level, stack level, script name (optional)
 	if (nargs < 3 || ! lua_isinteger (l, 3)) {
 		string error = "raiseError: Argument 3 is not an integer: ";
 		error.append(lua_typename(l, lua_type(l, 3)));

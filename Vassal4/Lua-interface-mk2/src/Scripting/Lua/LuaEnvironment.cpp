@@ -424,7 +424,8 @@ void LuaEnvironment::execute(Script *script, const Scriptable *thisPtr, ScriptRe
 
 	//
 	if (getCurrentContextLevel() >= LUA_RE_ENTRY_LIMIT) {
-		result.setScriptError("Scripts nested too deeply");
+		//result.setScriptError("Scripts nested too deeply");
+		luaL_error (l, "Scripts nested too deeply");
 		return;
 	}
 
@@ -489,7 +490,6 @@ void LuaEnvironment::execute(Script *script, const Scriptable *thisPtr, ScriptRe
 			// Script failed to run correctly
 			handleScriptError (l, result);
 		}
-
 	}
 
 	// Clear the Lua stack of anything remaining
