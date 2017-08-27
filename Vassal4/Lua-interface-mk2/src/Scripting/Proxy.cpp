@@ -22,11 +22,20 @@ void Proxy::checkOperationArguments(const string proxyName,
 		const string operationName, vector<unique_ptr<TValue>> &args,
 		ScriptResult &result) {
 
+	// Check the Vassal object has not been destroyed
+	if (isDestroyed()) {
+		result.setScriptError("Attempt to perform" + operationName +" on destroyed object: "+ proxyName);
+		return;
+	}
+
 	// Check there is a proxy definition
 	if (proxyDefinitions.count(proxyName) == 0) {
 		result.setVassalError("No Proxy Definition found for " + proxyName);
 		return;
 	}
+
+	// TODO Can an object have named scripts registered against it that can be called by user scripts??? How do we know about them here?
+	//      Will need to ask the wrapped object (should be done in checkOperationArguments)
 
 	// Check the operation is valid.
 	if (!proxyDefinitions[proxyName]->isOperationValid(operationName)) {
@@ -66,3 +75,10 @@ void Proxy::checkOperationArguments(const string proxyName,
 	return;
 }
 
+void Proxy::notifyDestroyed() {
+	destroyed = true;
+}
+
+bool Proxy::isDestroyed() const {
+	return destroyed;
+}

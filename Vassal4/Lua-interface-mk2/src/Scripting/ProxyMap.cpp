@@ -23,11 +23,13 @@ using namespace std;
 ProxyMap::ProxyMap(Map *vassalMap) {
 	// cout << "ProxyMap::ProxyMap" << endl;
 	registerProxyInfo();
-	this -> vassalMap = vassalMap;
+	setMap(vassalMap);
 }
 
 ProxyMap::~ProxyMap() {
-	// cout << "ProxyMap::~ProxyMap" << endl;
+	if (! isDestroyed()) {
+		vassalMap->removeDestructionListener(this);
+	}
 }
 
 ProxyMap::ProxyMap(const void *map) {
@@ -54,6 +56,7 @@ void ProxyMap::registerProxyInfo() {
 
 void ProxyMap::setMap (Map *vassalMap) {
 	this->vassalMap = vassalMap;
+	vassalMap->addDestructionListener(this);
 }
 
 Map *ProxyMap::getMap() {

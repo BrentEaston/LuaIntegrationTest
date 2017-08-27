@@ -45,8 +45,7 @@ public:
 	virtual ~Proxy();
 	virtual void performOperation(const string operation, vector<unique_ptr<TValue>> &args, ScriptResult &result)=0;
 
-
-	void notifyDeletion();
+	void notifyDestroyed();
 
 protected:
 
@@ -62,6 +61,8 @@ protected:
 
 	void checkOperationArguments (const string proxyName, const string operation, vector<unique_ptr<TValue>> &args, ScriptResult &result);
 
+	bool isDestroyed() const;
+	bool destroyed = false;
 };
 
 #endif /* _PROXY_H_ */

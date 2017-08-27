@@ -51,13 +51,24 @@ public:
 		return type >= eType_FIRST && type <= eType_LAST;
 	}
 
-	virtual ~Scriptable() {};
+	virtual ~Scriptable();
 
 	/**
 	 * Return the type of a Scriptable.
 	 */
 	virtual eType getScriptableType() const=0;
 
+	/*
+	 *
+	 */
+	virtual void addDestructionListener (Proxy *proxy);
+	virtual void removeDestructionListener (Proxy *proxy);
+	virtual void notifyDestructionListeners ();
+	virtual void destroy();
+
+private:
+
+	list<Proxy*> destructionListeners;
 };
 
 #endif /* SCRIPTABLE_H_ */

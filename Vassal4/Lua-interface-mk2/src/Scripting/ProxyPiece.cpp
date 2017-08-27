@@ -32,7 +32,9 @@ ProxyPiece::ProxyPiece(const void *piece) {
 }
 
 ProxyPiece::~ProxyPiece() {
-	// cout << "ProxyPiece::~ProxyPiece" << endl;
+	if (! isDestroyed()) {
+		vassalPiece->removeDestructionListener(this);
+	}
 }
 
 void ProxyPiece::registerProxyInfo() {
@@ -58,6 +60,7 @@ void ProxyPiece::setPiece(Piece *piece) {
 	// cout << "ProxyPiece::setPiece piece set to " << piece << endl;
 	// cout << "ProxyPiece::setPiece piece name= " << piece->getName() << endl;
 	this->vassalPiece = piece;
+	piece->addDestructionListener(this);
 }
 
 Piece *ProxyPiece::getPiece() {
@@ -69,6 +72,9 @@ void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TVal
 	// cout << "ProxyPiece::performOperation: operation = [" << operation << "]" << endl;
 
 	// TODO Can this be done as a dispatch table using a map of function pointers?
+
+	// TODO Can an object have named scripts registered against it that can be called by user scripts??? How do we know about them here?
+	//      Will need to ask the wrapped object (should be done in checkOperationArguments)
 
 	// Check that the number and types of arguments are as expected for this operation
 	checkOperationArguments (PROXY_NAME, operation, args, result);
