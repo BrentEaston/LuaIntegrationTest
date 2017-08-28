@@ -8,14 +8,11 @@
 #include <Collection.h>
 #include <Map.h>
 #include <Scripting/ContextFrame.h>
-#include <Scripting/ProxyCollection.h>
 #include <Scripting/ProxyDefinition.h>
 #include <Scripting/ProxyMap.h>
 #include <Scripting/ProxyOperation.h>
 #include <Scripting/Scriptable.h>
 #include <Scripting/ScriptResult.h>
-#include <algorithm>
-#include <iostream>
 
 class ProxyFactory;
 
@@ -95,25 +92,15 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 		// Retrieve the collection from the Vassal Map
 		Collection *pieces = vassalMap->getVisiblePieces();
 
+		// Create the proxy - The proxy will take ownership of the collection with a unique_ptr
+		getFrame()->getProxy(pieces);
+
 		// cout << "getVisiblePiece: Collection created at " << pieces << endl;
 		result.setResultValue (make_unique<TValue> ((void *) pieces, pieces->getScriptableType()));
 
 		// cout << "getVisiblePieces: Result set to " << result.getResult() ->toString() << endl;
 		return;
 
-	} else if (operation == "getVisiblePiecesNext") {
-
-		//if (visiblePiecesIterator == visiblePieces->end()) {
-		//	result.setResultValue(make_unique<TValue>());
-		//}
-		//else {
-		//	Piece *p = &(*visiblePiecesIterator);
-			// cout << "ProxyMap::performOperation:getVisiblePiecesNext p=" << p << endl;
-			// cout << "ProxyMap::performOperation:getVisiblePiecesNext *p.getName*()=" << (*p).getName() << endl;
-		//	result.setResultValue (make_unique<TValue>((void *) p, Scriptable::eType_Piece));
-		//	visiblePiecesIterator++;
-		//}
-		return;
 	}
 
 	result.setVassalError("ProxyMap: Unknown operation " + operation);

@@ -13,6 +13,8 @@
 #include <memory>
 #include <unordered_map>
 
+class Collection;
+
 /**
  * A ContextFrame is associated with each invocation of a script. It contains the Proxy objects that talk to the Vassal objects for all
  * Vassal objects referenced by the script. Script execution is full re-entrant. If a script calls itself, either directly or indirectly,
@@ -30,11 +32,15 @@ public:
 	 */
 	std::unique_ptr<Proxy> const & getProxy(const Scriptable *scriptable);
 
-	/** Create, or find an existing Proxy for a raw scriptable pointer and type supplied from the user script.
-	 *
+	/**
+	 * Create, or find an existing Proxy for a raw scriptable pointer and type supplied from the user script.
 	 */
 	std::unique_ptr<Proxy> const & getProxy(Scriptable::eType type, const void *ptr);
 
+	/**
+	 * Register a new Collection by creating a CollectionProxy to hold it.
+	 */
+	std::unique_ptr<Proxy> const & registerCollection (Collection *collection);
 private:
 	/** A map of all Proxy objects used by the script invocation this frame is attached to.
 	 * The ContextFrame for an invocation owns the proxies, hence using unique_ptr

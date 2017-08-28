@@ -78,7 +78,5 @@ Collection *Map::getVisiblePieces() {
 	collection->addItem(new Piece("Piece3", 3));
 	//	cout << "Map::getVisiblePieces Piece 3 is at " << & visiblePieces->at(2) << endl;
 
-	visiblePieces = unique_ptr<Collection> (collection);
-
-	return visiblePieces.get();
+	return collection;
 }

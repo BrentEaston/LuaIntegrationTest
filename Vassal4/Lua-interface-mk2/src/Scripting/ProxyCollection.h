@@ -36,7 +36,7 @@ public:
 
 private:
 
-	Collection *vassalCollection;
+	unique_ptr<Collection> vassalCollection;
 	int nextPtr = 0;
 
 

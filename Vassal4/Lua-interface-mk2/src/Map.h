@@ -36,8 +36,6 @@ public:
 
 protected:
 	std::string myName;
-	// TODO Where should Collection objects live? Can't really be here as it is not re-entrant.
-	std::unique_ptr<Collection> visiblePieces;
 
 };
 

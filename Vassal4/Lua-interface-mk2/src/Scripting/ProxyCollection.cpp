@@ -21,14 +21,14 @@ using namespace std;
 ProxyCollection::ProxyCollection(Collection *collection, ContextFrame *frame) {
 	// cout << "ProxyCollection::ProxyCollection 1" << endl;
 	registerProxyInfo();
-	vassalCollection = collection;
+	vassalCollection = unique_ptr<Collection> (collection);
 	setFrame(frame);
 }
 
 ProxyCollection::ProxyCollection(const void *collection, ContextFrame *frame) {
 	// cout << "ProxyCollection::ProxyCollection 2" << endl;
 	registerProxyInfo();
-	vassalCollection = (Collection *) collection;
+	vassalCollection =  unique_ptr<Collection> ((Collection *) collection);
 	setFrame(frame);
 }
 
@@ -65,5 +65,5 @@ void ProxyCollection::performOperation(const string operation, vector<unique_ptr
 }
 
 Collection *ProxyCollection::getCollection() const {
-	return vassalCollection;
+	return vassalCollection.get();
 }
