@@ -5,7 +5,10 @@
  *      Author: Brent
  */
 
+#include <Collection.h>
 #include <Map.h>
+#include <Scripting/ContextFrame.h>
+#include <Scripting/ProxyCollection.h>
 #include <Scripting/ProxyDefinition.h>
 #include <Scripting/ProxyMap.h>
 #include <Scripting/ProxyOperation.h>
@@ -13,17 +16,19 @@
 #include <Scripting/ScriptResult.h>
 #include <algorithm>
 #include <iostream>
-#include <iterator>
+
+class ProxyFactory;
 
 #define PROXY_NAME "Map"
 #define PROXY_TYPE Scriptable::eType_Map
 
 using namespace std;
 
-ProxyMap::ProxyMap(Map *vassalMap) {
+ProxyMap::ProxyMap(Map *vassalMap, ContextFrame *frame) {
 	// cout << "ProxyMap::ProxyMap" << endl;
 	registerProxyInfo();
 	setMap(vassalMap);
+	setFrame (frame);
 }
 
 ProxyMap::~ProxyMap() {
@@ -32,10 +37,11 @@ ProxyMap::~ProxyMap() {
 	}
 }
 
-ProxyMap::ProxyMap(const void *map) {
+ProxyMap::ProxyMap(const void *map, ContextFrame *frame) {
 	// cout << "ProxyMap::ProxyMap" << endl;
 	registerProxyInfo();
 	setMap((Map *) map);
+	setFrame (frame);
 }
 
 void ProxyMap::registerProxyInfo() {
@@ -86,27 +92,27 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 
 	} else if (operation == "getVisiblePieces") {
 
-		visiblePieces = std::move(vassalMap->getVisiblePieces());
-		visiblePiecesIterator = visiblePieces->begin();
+		// Retrieve the collection from the Vassal Map
+		Collection *pieces = vassalMap->getVisiblePieces();
 
-		// cout << "ProxyMap::performOperation:getVisiblePieces Piece 1 is at " << & (visiblePieces->at(0)) << endl;
-		// cout << "ProxyMap::performOperation:getVisiblePieces Piece 1 name is " << visiblePieces->at(0).getName() << endl;
+		// cout << "getVisiblePiece: Collection created at " << pieces << endl;
+		result.setResultValue (make_unique<TValue> ((void *) pieces, pieces->getScriptableType()));
 
-		result.setResultValue (make_unique<TValue> ((void *) vassalMap, vassalMap->getScriptableType()));
+		// cout << "getVisiblePieces: Result set to " << result.getResult() ->toString() << endl;
 		return;
 
 	} else if (operation == "getVisiblePiecesNext") {
 
-		if (visiblePiecesIterator == visiblePieces->end()) {
-			result.setResultValue(make_unique<TValue>());
-		}
-		else {
-			Piece *p = &(*visiblePiecesIterator);
+		//if (visiblePiecesIterator == visiblePieces->end()) {
+		//	result.setResultValue(make_unique<TValue>());
+		//}
+		//else {
+		//	Piece *p = &(*visiblePiecesIterator);
 			// cout << "ProxyMap::performOperation:getVisiblePiecesNext p=" << p << endl;
 			// cout << "ProxyMap::performOperation:getVisiblePiecesNext *p.getName*()=" << (*p).getName() << endl;
-			result.setResultValue (make_unique<TValue>((void *) p, Scriptable::eType_Piece));
-			visiblePiecesIterator++;
-		}
+		//	result.setResultValue (make_unique<TValue>((void *) p, Scriptable::eType_Piece));
+		//	visiblePiecesIterator++;
+		//}
 		return;
 	}
 

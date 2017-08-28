@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include <vector>
 
+class ContextFrame;
+
 class ScriptResult;
 
 class ProxyDefinition;
@@ -63,6 +65,10 @@ protected:
 
 	bool isDestroyed() const;
 	bool destroyed = false;
+
+	void setFrame (ContextFrame *frame);
+	ContextFrame *getFrame() const;
+	ContextFrame *frame;
 };
 
 #endif /* _PROXY_H_ */

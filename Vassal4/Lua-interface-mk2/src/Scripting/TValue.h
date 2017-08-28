@@ -65,6 +65,7 @@ public:
 	TValue(std::string s);
 
 	// Construct a Object TValue
+	TValue(Scriptable *scriptable);
 	TValue(void *p, const Scriptable::eType objectType);
 	TValue(void *p);
 

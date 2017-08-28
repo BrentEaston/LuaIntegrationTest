@@ -75,6 +75,15 @@ void Proxy::checkOperationArguments(const string proxyName,
 	return;
 }
 
+void Proxy::setFrame (ContextFrame *frame){
+	this -> frame = frame;
+}
+
+ContextFrame *Proxy::getFrame() const {
+	return frame;
+}
+
+
 void Proxy::notifyDestroyed() {
 	destroyed = true;
 }

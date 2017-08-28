@@ -25,9 +25,9 @@ using namespace std;
  */
 class ProxyPiece : public Proxy {
 public:
-	ProxyPiece(Piece *piece);
+	ProxyPiece(Piece *piece, ContextFrame *frame);
 
-	ProxyPiece(const void *vassalPiece);
+	ProxyPiece(const void *vassalPiece, ContextFrame *frame);
 
 	virtual ~ProxyPiece();
 

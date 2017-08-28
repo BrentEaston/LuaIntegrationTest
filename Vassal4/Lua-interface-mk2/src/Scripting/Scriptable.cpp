@@ -2,7 +2,8 @@
 #include <Scripting/Scriptable.h>
 
 // Initialise static storage
-std::string Scriptable::typeNames[] = {"Invalid", "Piece", "Map" };
+// eType_Invalid, eType_Piece, eType_Map, eType_Face, eType_Location, eType_Surface, eType_Player, eType_Collection
+std::string Scriptable::typeNames[] = {"Invalid", "Piece", "Map", "Face", "Location", "Surface", "Player", "Collection" };
 
 Scriptable::~Scriptable() {
 	notifyDestructionListeners();

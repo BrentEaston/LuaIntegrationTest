@@ -31,11 +31,11 @@ public:
 	 * Any changes here must be reflected in init.lua
 	 */
 	enum eType {
-		eType_Invalid, eType_Piece, eType_Map
+		eType_Invalid, eType_Piece, eType_Map, eType_Face, eType_Location, eType_Surface, eType_Player, eType_Collection
 	};
 
 	static const eType eType_FIRST = eType_Piece;
-	static const eType eType_LAST = eType_Map;
+	static const eType eType_LAST = eType_Collection;
 
 	static std::string typeNames[];
 

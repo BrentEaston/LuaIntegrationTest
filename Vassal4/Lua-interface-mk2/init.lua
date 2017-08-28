@@ -146,12 +146,34 @@ function Map:getVisiblePieces()
   -- print ('In Lua:Map:getVisiblePieces')
   local iter = _V_callback (self.type, self.ptr, "getVisiblePieces")
   return function ()
-    local piece = _V_callback (self.type, self.ptr, "getVisiblePiecesNext")
+    -- print ('In Lua:Map:getVisiblePieces:iter, type='..tostring(iter.type)..', ptr='..tostring(iter.ptr))
+    local piece = _V_callback (iter.type, iter.ptr, "next")
     return piece
   end
 end
 
 _V_Map = Map
+
+--
+-- Lua Collection Object. Allows Lua scripts to interact with a Vassal Collection Object.
+--
+local Collection = {}
+Collection.__index = Collection
+Collection.__name = "Collection"
+Collection.__lock = true
+Collection.__properties = {}
+
+
+function Collection:new (type, ptr)
+  -- print('Lua:Collection:new, type='..tostring(type)..', ptr='..tostring(ptr))
+  local collection = {}
+  setmetatable (collection, Collection)
+  collection.type = type
+  collection.ptr = ptr
+  return CreateObjectProxy (collection, "Collection")
+end
+
+_V_Collection = Collection
 
 ---------------------------------------------------------------------------------------------------------
 -- Object table. Links the Scriptable::ScriptableType enums to Lua types
@@ -160,13 +182,17 @@ _V_Map = Map
 _V_ObjectMap = {}
 _V_ObjectMap[1] = _V_Piece
 _V_ObjectMap[2] = _V_Map
+_V_ObjectMap[7] = _V_Collection
 
 ---------------------------------------------------------------------------------------------------------
 -- Create an appropriate Lua object based on a context type and pointer
 ---------------------------------------------------------------------------------------------------------
 _V_NewObject = function (contextType, contextPtr)
---print ('In _V_NewObject, contextType='..tostring(contextType)..', contextPtr='..tostring(contextPtr))
+  -- print ('In _V_NewObject, contextType='..tostring(contextType)..', contextPtr='..tostring(contextPtr))
   local o = _V_ObjectMap[contextType];
+  if (o == nil) then
+    raiseError("NewObject: Attempt to create unknown Object type "..tostring(contectType), _V_VASSAL_ERROR, 2)
+  end
   return o:new(contextType, contextPtr)
 end
 

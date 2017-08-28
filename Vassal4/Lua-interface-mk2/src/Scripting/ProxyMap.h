@@ -24,9 +24,9 @@ using namespace std;
  */
 class ProxyMap : public Proxy {
 public:
-	ProxyMap(Map *map);
+	ProxyMap(Map *map, ContextFrame *frame);
 
-	ProxyMap(const void *vassalMap);
+	ProxyMap(const void *vassalMap, ContextFrame *frame);
 
 	virtual ~ProxyMap();
 
@@ -41,8 +41,6 @@ public:
 private:
 	Map *vassalMap;
 
-	std::unique_ptr<std::vector<Piece>> visiblePieces;
-	std::vector<Piece>::iterator visiblePiecesIterator;
 };
 
 #endif /* PROXYMAP_H_ */

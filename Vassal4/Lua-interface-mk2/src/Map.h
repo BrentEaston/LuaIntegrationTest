@@ -8,10 +8,12 @@
 #ifndef MAP_H_
 #define MAP_H_
 
-#include <Piece.h>
+#include <Scripting/Scriptable.h>
+#include <Scripting/TValue.h>
 #include <memory>
 #include <string>
-#include <vector>
+
+class Collection;
 
 using namespace std;
 
@@ -30,10 +32,12 @@ public:
 
 	eType getScriptableType () const;
 
-	std::unique_ptr<std::vector<Piece>> getVisiblePieces();
+	Collection *getVisiblePieces();
 
 protected:
 	std::string myName;
+	// TODO Where should Collection objects live? Can't really be here as it is not re-entrant.
+	std::unique_ptr<Collection> visiblePieces;
 
 };
 

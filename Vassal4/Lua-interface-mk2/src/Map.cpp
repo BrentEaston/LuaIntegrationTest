@@ -5,12 +5,13 @@
  *      Author: Brent
  */
 
+#include <Collection.h>
 #include <Map.h>
+#include <Piece.h>
 #include <Scripting/Script.h>
 #include <Scripting/ScriptingEnvironment.h>
 #include <Scripting/ScriptingFactory.h>
 #include <Scripting/ScriptResult.h>
-#include <memory>
 #include <iostream>
 
 using namespace std;
@@ -40,7 +41,7 @@ Scriptable::eType Map::getScriptableType() const {
 }
 
 TValue *Map::get(const std::string propertyName) const {
-	cout << "   in Map::get looking up property name " << propertyName << " = " << getName() << endl;
+	// cout << "   in Map::get looking up property name " << propertyName << " = " << getName() << endl;
 	if (propertyName == "Name") {
 		return new TValue(getName());
 	} else if (propertyName == "runScript") {
@@ -65,17 +66,19 @@ TValue *Map::properties() const {
 }
 
 
-std::unique_ptr<std::vector<Piece>> Map::getVisiblePieces() {
+Collection *Map::getVisiblePieces() {
 
 	//std::vector<Piece> *pieces = new std::vector<Piece>();
-	std::unique_ptr<std::vector<Piece>> visiblePieces = std::make_unique<std::vector<Piece>>();
+	Collection *collection = new Collection();
 
-	visiblePieces->push_back(new Piece("Piece1", 1));
-	//	cout << "Map::getVisiblePieces Piece 1 is at " << & visiblePieces->at(0) << endl;
-	visiblePieces->push_back(new Piece("Piece2", 2));
+	collection->addItem(new Piece("Piece1", 1));
+	// cout << "Map::getVisiblePieces Piece 1 is at " << collection->getItem(0) << endl;
+	collection->addItem(new Piece("Piece2", 2));
 	//	cout << "Map::getVisiblePieces Piece 2 is at " << & visiblePieces->at(1) << endl;
-	visiblePieces->push_back(new Piece("Piece3", 3));
+	collection->addItem(new Piece("Piece3", 3));
 	//	cout << "Map::getVisiblePieces Piece 3 is at " << & visiblePieces->at(2) << endl;
 
-	return visiblePieces;
+	visiblePieces = unique_ptr<Collection> (collection);
+
+	return visiblePieces.get();
 }

@@ -33,8 +33,8 @@ std::unique_ptr<Proxy> const & ContextFrame::getProxy(const Scriptable *scriptab
 
 std::unique_ptr<Proxy> const & ContextFrame::getProxy(Scriptable::eType type, const void *ptr) {
 	if (proxies.count(ptr) == 0) {
-		proxies[ptr] = proxyFactory.createProxy(type, ptr);
-		// cout << "ContextFrame::getProxy Created proxy at " << proxies[ptr].get() << " for object at " << ptr << endl;
+		proxies[ptr] = move(proxyFactory.createProxy(type, ptr, this));
+		// cout << "ContextFrame::getProxy Created proxy at " << proxies[ptr].get() << " for object at " << ptr << ", type " << type << endl;
 	}
 	return proxies[ptr];
 }

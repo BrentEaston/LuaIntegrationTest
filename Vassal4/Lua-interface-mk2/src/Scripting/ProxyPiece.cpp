@@ -19,16 +19,18 @@
 
 using namespace std;
 
-ProxyPiece::ProxyPiece(Piece *piece) {
+ProxyPiece::ProxyPiece(Piece *piece, ContextFrame *frame) {
 	// cout << "ProxyPiece::ProxyPiece" << endl;
 	registerProxyInfo();
-	this->vassalPiece = piece;
+	setPiece(piece);
+	setFrame(frame);
 }
 
-ProxyPiece::ProxyPiece(const void *piece) {
+ProxyPiece::ProxyPiece(const void *piece, ContextFrame *frame) {
 	// cout << "ProxyPiece::ProxyPiece" << endl;
 	registerProxyInfo();
 	setPiece((Piece *)piece);
+	setFrame(frame);
 }
 
 ProxyPiece::~ProxyPiece() {
@@ -52,6 +54,8 @@ void ProxyPiece::registerProxyInfo() {
 
 		// piece.getMap(). Return the Map this piece is currently place on. No Arguments. May return nil.
 		def -> registerOperation("getMap");
+
+		registerProxy(def);
 
 	}
 }

@@ -26,18 +26,6 @@ TValue::TValue(int i) {
 	setInteger(i);
 }
 
-//TValue::TValue(long int i) {
-//	setInteger(i);
-//}
-
-//TValue::TValue(long long int i) {
-//	setInteger(i);
-//}
-
-//TValue::TValue(double n) {
-//	setFloat(n);
-//}
-
 TValue::TValue(float n) {
 	setFloat(n);
 }
@@ -58,6 +46,13 @@ TValue::TValue(void *p) {
 	setPointer(p);
 	setType(eType_Vobject);
 }
+
+TValue::TValue(Scriptable *scriptable) {
+	setPointer(scriptable);
+	setType(eType_Vobject);
+	setObjectType(scriptable->getScriptableType());
+}
+
 
 TValue::eType TValue::getType() {
 	return valueType;
@@ -89,7 +84,7 @@ std::string TValue::getValueAsString() {
 		return getStringValue();
 		break;
 	case eType_Vobject:
-		return "";
+		return Scriptable::getTypeName(getObjectType());
 		break;
 	case eType_nil:
 		return "";
