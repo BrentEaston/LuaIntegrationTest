@@ -38,9 +38,17 @@ protected:
 	// Objects declared here can be used by all tests in the test case for Foo.
 };
 
-TEST(ScriptError_test, test1) {
-	int a = 1;
-	int b = 2;
-	EXPECT_EQ(1, b - 1);
+TEST_F(ScriptError_test, ConstructorTest) {
+	string message = "Error message";
+	ScriptResult::eResult resultLevel = ScriptResult::eResult_Script_Error;
+	string name = "TestScript";
+	string info = "Error message\nstack traceback:\nStack Level 1\nStack Level 2";
+
+	ScriptError error (message, resultLevel, name, info);
+
+	EXPECT_EQ (message, error.getMessage());
+	EXPECT_EQ (resultLevel, error.getLevel());
+	EXPECT_EQ (name, error.getSource());
+	EXPECT_EQ (info, error.getInfo());
 }
 

@@ -69,6 +69,10 @@ class TValue_Test : public ::testing::Test {
 	    EXPECT_EQ ("Float: "+std::to_string(f), t.toString());
   }
 
+  std::string boolToString (const bool b) {
+	  return b ? "true" : "false";
+  }
+
   void BoolTester (const bool b) {
 	  	TValue t (b);
 	    EXPECT_EQ (TValue::eType_boolean, t.getType());
@@ -79,8 +83,8 @@ class TValue_Test : public ::testing::Test {
 	    EXPECT_TRUE(t.isBoolean());
 	    EXPECT_FALSE(t.isString());
 	    EXPECT_FALSE(t.isObject());
-	    EXPECT_EQ (std::to_string(b), t.getValueAsString());
-	    EXPECT_EQ ("Boolean: "+std::to_string(b), t.toString());
+	    EXPECT_EQ (boolToString(b), t.getValueAsString());
+	    EXPECT_EQ ("Boolean: "+boolToString(b), t.toString());
   }
 
   void StringTester (const std::string s) {
@@ -96,8 +100,6 @@ class TValue_Test : public ::testing::Test {
 	    EXPECT_EQ (s, t.getValueAsString());
 	    EXPECT_EQ ("String: "+s, t.toString());
   }
-
-
 
 };
 
@@ -148,8 +150,8 @@ TEST_F(TValue_Test, ObjectConstructor) {
 	EXPECT_FALSE(t.isBoolean());
 	EXPECT_FALSE(t.isString());
 	EXPECT_TRUE(t.isObject());
-	EXPECT_EQ ("", t.getValueAsString());
-	EXPECT_EQ ("Object: ", t.toString());
+	EXPECT_EQ ("Piece", t.getValueAsString());
+	EXPECT_EQ ("Object: Piece", t.toString());
 	EXPECT_EQ (p->getScriptableType(), t.getObjectType());
 	EXPECT_EQ ((void *) p, t.getObjectPointer());
 

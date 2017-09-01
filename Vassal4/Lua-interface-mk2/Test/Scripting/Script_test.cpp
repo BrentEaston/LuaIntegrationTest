@@ -59,6 +59,15 @@ protected:
 	ScriptResult result;
 
 	ScriptingEnvironment *environment = ScriptingFactory::getInstance() -> getEnvironment().get();
+
+	bool startsWith (string in, string lookup) {
+		return in.length() >= lookup.length() && in.find(lookup) == 0;
+	}
+
+	bool contains (string in, string lookup) {
+		return in.length() >= lookup.length() && in.find(lookup) < string::npos;
+	}
+
 };
 
 TEST_F(Script_test, ConstructorTests) {
@@ -114,20 +123,103 @@ TEST_F(Script_test, SandboxTests) {
 	s1.execute(piece, result);
 	EXPECT_TRUE (result.isSuccessful()) << "Check Global Variables redirected from proxy table to real table. Error: " << result.getError();
 
+}
+TEST_F(Script_test, RawgetSandbox) {
+	// Test rawget sandboxing
 	Script s2 (environment, "local tab = {22, 33}\nlocal x = rawget(tab, 1)", "Test2");
 	s2.execute(piece, result);
 	EXPECT_TRUE (result.isSuccessful()) << "Check rawget available on local table. Error: " << result.getError();
 
 	Script s3 (environment, "local x = _ENV local y = rawget(x, 'Hi')", "Test3");
 	s3.execute(piece, result);
-	EXPECT_FALSE (result.isSuccessful()) << "Check rawset blocked on global table. Error: " << result.getError();
-
+	EXPECT_FALSE (result.isSuccessful()) << "Check rawget blocked on global table.";
+	EXPECT_TRUE (startsWith(result.getError(), "May not use rawget on a locked table")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, RawsetSandbox) {
+	// Test rawset sandboxing
 	Script s4 (environment, "local tab = {22, 33}\nrawset(tab, 3, 'Test')", "Test4");
 	s4.execute(piece, result);
 	EXPECT_TRUE (result.isSuccessful()) << "Check rawset available on local table. Error: " << result.getError();
 
 	Script s5 (environment, "local x = _ENV rawset(x, 'Hi', 'there')", "Test5");
 	s5.execute(piece, result);
-	EXPECT_FALSE (result.isSuccessful()) << "Check rawset blocked on global table. Error: " << result.getError();
+	EXPECT_FALSE (result.isSuccessful()) << "Check rawset blocked on global table.";
+	EXPECT_TRUE (startsWith(result.getError(), "May not use rawset on a locked table")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, SetmetatableSandbox) {
+	// Test setmetatable sandboxing
+	Script s6 (environment, "local tab = {22, 33}\nsetmetatable(tab, {})", "Test6");
+	s6.execute(piece, result);
+	EXPECT_TRUE (result.isSuccessful()) << "Check setmetatable available on local table. Error: " << result.getError();
+
+	Script s7 (environment, "local x = _ENV setmetatable(x, {})", "Test7");
+	s7.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check setmetatable blocked on global table.";
+	EXPECT_TRUE (startsWith(result.getError(), "May not use setmetatable on a locked table")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, GetmetatableSandbox) {
+	// Test getmetatable sandboxing
+	Script s8 (environment, "local tab = {22, 33}\nlocal y = getmetatable(tab)", "Test8");
+	s8.execute(piece, result);
+	EXPECT_TRUE (result.isSuccessful()) << "Check getmetatable available on local table. Error: " << result.getError();
+
+	Script s9 (environment, "local x = _ENV local y = getmetatable(x)", "Test9");
+	s9.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check getmetatable blocked on global table.";
+	EXPECT_TRUE (startsWith(result.getError(), "May not use getmetatable on a locked table")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, GlobalVariableSandbox) {
+	// Attempt to set a global variable
+	Script s10 (environment, "xyzzy=42");
+	s10.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check unable to create global variables";
+	EXPECT_TRUE (startsWith(result.getError(), "Attempting to set Global Variable")) << "Unexpected error message: " << result.getError();
+
+	// Attempt to read a global variable
+	Script s11 (environment, "local x = xyzzy");
+	s11.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check error attempting to read global variables";
+	EXPECT_TRUE (startsWith(result.getError(), "Attempting to read undefined value")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, StringRepSandbox) {
+	// Check string.rep() limits number of replications
+	Script s12 (environment, "local x = string.rep('x', 100)");
+	s12.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check replication limit for string.rep()";
+	EXPECT_TRUE (contains (result.getError(), "string.rep() too many replications")) << "Unexpected error message: " << result.getError();
+
+	Script s13 (environment, "local x = ('42'):rep(100)");
+	s13.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Check replication limit for ('42'):rep()";
+	EXPECT_TRUE (contains (result.getError(), "string.rep() too many replications")) << "Unexpected error message: " << result.getError();
+
+	// Check string.rep() works for small number of replications
+	Script s14 (environment, "local x = string.rep('x', 10)");
+	s14.execute(piece, result);
+	EXPECT_TRUE (result.isSuccessful()) << "Replication limit for string.rep() too low";
+
+	Script s15 (environment, "local x = ('x'):rep(10)");
+	s15.execute(piece, result);
+	EXPECT_TRUE (result.isSuccessful()) << "Replication limit for ('x'):rep(10) too low, error: " << result.getError();
+}
+TEST_F(Script_test, StringFindSandbox) {
+	Script s15 (environment, "local s = '01234567890123456789012345678901234567890123456789' s:find('.*.*.*.*.*.*.*.*.*.*.*x')");
+	s15.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Complex pattern match failure";
+	EXPECT_TRUE (contains (result.getError(), "match Pattern too complex")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, CpuLimitSandbox) {
+	// Check CPU limitation
+	Script s16 (environment, "local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end fib(37)");
+	s16.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "CPU Limitation check failed";
+	EXPECT_TRUE (startsWith (result.getError(), "Script using too much CPU")) << "Unexpected error message: " << result.getError();
+}
+TEST_F(Script_test, MemoryLimitSandbox) {
+	// Check Memory limitation
+	Script s17 (environment, "local x = 'test' for i = 1, 100 do x = x .. x end");
+	s17.execute(piece, result);
+	EXPECT_FALSE (result.isSuccessful()) << "Memory Limitation Check failed";
+	EXPECT_TRUE (startsWith (result.getError(), "Script using too much Memory")) << "Unexpected error message: " << result.getError();
 
 }

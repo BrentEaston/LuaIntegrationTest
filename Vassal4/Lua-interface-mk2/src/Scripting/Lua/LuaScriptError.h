@@ -29,6 +29,7 @@ public:
 	const string formatError() const;
 
 	void build();
+	void push() const;
 	void throwError();
 protected:
 
@@ -44,7 +45,6 @@ protected:
 
 	void setInfo(const string &info);
 
-	void push() const;
 private:
 	lua_State *l;
 };
