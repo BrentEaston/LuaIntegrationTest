@@ -48,11 +48,14 @@ TValue *Map::get(const std::string propertyName) const {
 		string s = "local x = 10\n"
 				"local y = 20\n"
 				"print('Some output from nested script')\n"
-				"setmetatable(_ENV, {})";
+				"setmetatable(_ENV, {})"
+				;
 		ScriptingEnvironment *environment = ScriptingFactory::getInstance() -> getEnvironment().get();
 		Script script (environment, s, "MapTestLower");
 		ScriptResult result;
+		//cout << "  Map::get Execute script" << endl;
 		script.execute(this, result);
+		//cout << "  Map::get Error=" << result.getError() << ", result value=" << result.getResult()->toString() << endl;
 	}
 	return new TValue("");
 }

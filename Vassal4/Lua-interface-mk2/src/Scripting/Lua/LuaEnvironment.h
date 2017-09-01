@@ -49,7 +49,7 @@ public:
 	// Sandbox limits for a single script, including all sub-scripts
 	// TODO Make the configurable Via Vassal Config system
 	static const int LUA_STEP_DELTA = 200;			// How often (Lua VM steps) between Memory and CPU checks
-	static const long LUA_STEP_LIMIT = 250000; 	// How many Memory/CPU checks before raising an error
+	static const long LUA_STEP_LIMIT = 250000; 	// How many CPU checks before raising an error
 	static const int LUA_MEMORY_LIMIT = 500;		// Maximum memory allocated to the Lua Environment
 	static const int LUA_STRING_REP_LIMIT = 40;	// Maximum replication argument for string.rep()
 	static const int LUA_RE_ENTRY_LIMIT = 40;		// Maximum number of times a script can be called from within another script without returning
@@ -59,6 +59,7 @@ public:
 private:
 
 	void handleScriptError (lua_State *l, ScriptResult &result);
+	void cleanLuaStack (lua_State *l);
 
 	/** The Global Lua state */
 	lua_State *state;

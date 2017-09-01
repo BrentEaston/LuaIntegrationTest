@@ -34,7 +34,7 @@ public:
 
 	void setMap (Map *vassalMap);
 
-	Map *getMap();
+	Map *getMap() const;
 
 	void performOperation(const string operation, vector<unique_ptr<TValue>> &args, ScriptResult &result);
 

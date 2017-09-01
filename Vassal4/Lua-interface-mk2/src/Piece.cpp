@@ -54,6 +54,8 @@ Scriptable::eType Piece::getScriptableType() const {
 
 TValue *Piece::get(const std::string propertyName) const {
 
+	// cout << "Piece::get: propertyName=" << propertyName << endl;
+
 	if (propertyName == "Level") {
 		return  new TValue(getLevel());
 	}
@@ -63,7 +65,9 @@ TValue *Piece::get(const std::string propertyName) const {
 	else if (propertyName == "visible") {
 		return new TValue(true);
 	}
-	return new TValue;
+	TValue *t = new TValue("abc");
+	// cout << "Piece::get: Result = " << t->toString() << endl;
+	return t;
 }
 
 void Piece::set (const string propertyName, TValue value) {
@@ -79,7 +83,7 @@ void Piece::setMap (Map *map) {
 	myMap = map;
 }
 
-const Map *Piece::getMap() {
+Map *Piece::getMap() {
 	return myMap;
 }
 

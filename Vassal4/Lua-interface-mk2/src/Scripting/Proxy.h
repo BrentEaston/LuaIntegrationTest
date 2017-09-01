@@ -54,16 +54,16 @@ protected:
 	static unordered_map<string, unique_ptr<ProxyDefinition>> proxyDefinitions;
 
 	virtual void registerProxyInfo()=0;
-	const string getProxyName();
-	const Scriptable::eType getProxyType();
+	const string getProxyName() const;
+	const Scriptable::eType getProxyType() const;
 
 	unique_ptr<ProxyOperation> registerOperation (const string operationName);
-	bool isRegistered(const string proxyName);
+	const bool isRegistered(const string proxyName) const;
 	void registerProxy(unique_ptr<ProxyDefinition> &proxyDefinition);
 
 	void checkOperationArguments (const string proxyName, const string operation, vector<unique_ptr<TValue>> &args, ScriptResult &result);
 
-	bool isDestroyed() const;
+	const bool isDestroyed() const;
 	bool destroyed = false;
 
 	void setFrame (ContextFrame *frame);

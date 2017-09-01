@@ -12,12 +12,12 @@
 #include <Lua/lua.hpp>
 #include <Scripting/ContextFrame.h>
 #include <Scripting/Lua/LuaEnvironment.h>
-#include <Scripting/Lua/LuaError.h>
+#include <Scripting/Lua/LuaScriptError.h>
 #include <Scripting/Proxy.h>
 #include <Scripting/Script.h>
 #include <Scripting/Scriptable.h>
 #include <Scripting/TValue.h>
-#include <Scripting/ScriptResult.h>
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
@@ -42,6 +42,10 @@ static LuaEnvironment *luaEnvironment;
  * Handle an error detected during execution of a callback by pushing an error message on to the stack
  * and calling lua_error to jump back to the last pcall.
  *
+ * cbAssert is only called when a new error is raised in the C/Lua interface. The stack is in an
+ * indeterminate state since we where in the middle of interface processing, so clear it to get back
+ * to a known state and raise a new error.
+ *
  * Needs to be static to be callable from callback and Lua
  */
 extern "C" {
@@ -49,15 +53,24 @@ extern "C" {
 void cbAssert(lua_State *l, const bool test, const string source, const string message, const ScriptResult::eResult errorLevel) {
 
 	if (!test) {
-		// Create an error object on the Stack and call lua_error
 		// cout << "cbAssert: Error raised=" << message << endl;
-		lua_newtable(l);
-		lua_pushinteger(l, errorLevel);
-		lua_setfield(l, -2, "level");
-		string error = (source.length() == 0) ? message : source + ": " + message;
-		lua_pushstring(l, error.c_str());
-		lua_setfield(l, -2, "error");
-		lua_error(l);
+
+		// Restore the Lua stack to a known state by clearing it.
+		lua_pop (l, lua_gettop(l));
+
+		// Create a new Script error and send it up the chain for processing
+		LuaScriptError error (l, source, message, errorLevel);
+		error.build();
+		error.throwError();
+
+
+
+//		lua_pushinteger(l, errorLevel);
+//		lua_setfield(l, -2, "level");
+//		string error = (source.length() == 0) ? message : source + ": " + message;
+//		lua_pushstring(l, error.c_str());
+//		lua_setfield(l, -2, "error");
+//		lua_error(l);
 	}
 }
 
@@ -78,15 +91,32 @@ void cbAssert(lua_State *l, const bool test, const string source, const string m
  * Read the arguments, convert a String error to an error table and call lua_error
  */
 static int raiseError(lua_State *l) {
-	// cout << "raiseError: In raiseError" << endl;
+	// cout << "raiseError: In raiseError, nargs =" << lua_gettop(l) << endl;
 
-	LuaError error (l);
-	error.build();
+	//luaL_traceback (l, l, "", 2);
+	//cout << "raiseError: traceback: " << lua_tostring(l,-1) << endl;;
+	//lua_pop(l, 1);
+
+	//LuaError error (l);
+	LuaScriptError error (l);
 		// cout << "raiseError: Error=" << error.formatError() << endl;
+	error.build();
 	error.throwError();
 
 	return 0;
 }
+
+/*
+ * Debug hook called from within Lua every 200 (configuable) VM steps executed.
+ * Check for memory and CPU over-usage.
+ */
+static void hook(lua_State* l, lua_Debug *ar) {
+	cbAssert(l, (luaEnvironment->incrLuaStepCount() <= LuaEnvironment::LUA_STEP_LIMIT), "", "Script using too much CPU",
+			ScriptResult::eResult_Script_Error);
+	cbAssert(l, (lua_gc(l, LUA_GCCOUNT, 0) <= LuaEnvironment::LUA_MEMORY_LIMIT), "", "Script using too much Memory",
+			ScriptResult::eResult_Script_Error);
+}
+
 /**
  * Static callback routine used by Lua scripts to act on Vassal game objects.
  *
@@ -115,7 +145,7 @@ static int callback(lua_State *l) {
 	string id = "Callback";
 
 	// 1st argument must be an integer and must represent a valid Scriptable type
-	cbAssert(l, nargs > 0, id, "[1] No arguments supplied in Callback", ScriptResult::eResult_Vassal_Error);
+	cbAssert(l, nargs > 0, id, "No arguments supplied in Callback", ScriptResult::eResult_Vassal_Error);
 	cbAssert(l, lua_isinteger(l, 1), id, "Callback arg 1 is not an integer", ScriptResult::eResult_Vassal_Error);
 	Scriptable::eType contextType = (Scriptable::eType) lua_tointeger(l, 1);
 	id += ":" + Scriptable::getTypeName(contextType);
@@ -213,6 +243,8 @@ static int callback(lua_State *l) {
 
 	id += "]";
 
+	lua_pop(l, nargs);
+
 	// cout << "Callback:  - " << id << endl;
 
 	// Ask the Proxy to perform the operation. It will take care of 'talking' to the real Vassal Game Object
@@ -225,12 +257,14 @@ static int callback(lua_State *l) {
 
 	myContext->getProxy(contextType, contextPtr)->performOperation(operation, args, scriptResult);
 
+	// cout << "Callback: getProxy returns with Script Result value=" << scriptResult.getResult()->toString() << endl;
+
 	/*
 	 *  Pop the args that where sent to us from Lua off the stack.
 	 *  NOTE: These cannot be popped prior to this as their value becomes undefined once popped
 	 */
 
-	lua_pop(l, nargs);
+//	lua_pop(l, nargs);
 
 	// If there is an error trying to talk to the Vassal object, abort!
 	cbAssert(l, scriptResult.getResultLevel() == ScriptResult::eResult_Success, id, scriptResult.getError(),
@@ -276,17 +310,6 @@ static int callback(lua_State *l) {
 	}
 
 	return returnArgsCount;
-}
-
-/*
- * Debug hook called from within Lua every 200 (configuable) VM steps executed.
- * Check for memory and CPU over-usage.
- */
-static void hook(lua_State* l, lua_Debug *ar) {
-	cbAssert(l, (luaEnvironment->incrLuaStepCount() <= LuaEnvironment::LUA_STEP_LIMIT), "", "Script using too much CPU",
-			ScriptResult::eResult_Script_Error);
-	cbAssert(l, (lua_gc(l, LUA_GCCOUNT, 0) <= LuaEnvironment::LUA_MEMORY_LIMIT), "", "Script using too much Memory",
-			ScriptResult::eResult_Script_Error);
 }
 
 /*
@@ -379,13 +402,15 @@ void LuaEnvironment::handleScriptError(lua_State *l, ScriptResult &result) {
 
 	// cout << "LuaEnvironment::handleScriptError: context level=" << getCurrentContextLevel() << endl;
 	// Get error details off stack
-	LuaError error (l);
+	// LuaError error (l);
+	// error.build();
+	LuaScriptError error (l);
 	error.build();
 
 	// Back to the top level script?
 	if (getCurrentContextLevel() == 1) {
 		// Yes, Set the error details into the result
-		result.setError(error.formatError(), error.getErrorLevel());
+		result.setError(error.formatError(), error.getLevel());
 	}
 	else {
 		// No, Pass error up to the next level
@@ -407,13 +432,13 @@ void LuaEnvironment::validate(Script *expression, ScriptResult &result) {
 		string err = lua_tostring(l, -1);
 		int pos = err.find(']', 0);
 		result.setScriptError("["+expression->getName()+err.substr(pos, string::npos));
-		lua_pop(l, lua_gettop(l));
+		cleanLuaStack(l);
 		return;
 	}
 
-	// No error, clear the error flag in the expression and pop the compiled expression off the Lua stack.
+	// No error, clear the error flag in the expression and clean the Lua stack.
 	result.clearError();
-	lua_pop(l, lua_gettop(l));
+	cleanLuaStack(l);
 	return;
 }
 
@@ -461,22 +486,18 @@ void LuaEnvironment::execute(Script *script, const Scriptable *thisPtr, ScriptRe
 	// lua_pcall will return 0 if the sandbox successfully attempts to execute the script (even if the script itself fails)
 	// A non-zero return indicates the sandbox evaluation routine _M.eval failed.
 	// 5 Arguments are passed to _M.eval and 2 returned
+	// cout << "LuaEnvironment::execute: prior to lua_pcall, nargs=" << lua_gettop(l) << endl;
 	if (lua_pcall(l, 5, 2, 0) != LUA_OK) {
-		// cout << "LuaEnvironment::execute pcall failed pcall, script: " << script->getName() << endl;
+		// cout << "LuaEnvironment::execute: lua_pcall failed, nargs=" << lua_gettop(l) << ", top=" << lua_typename(l, lua_type(l,-1)) << endl;
 
 		handleScriptError (l, result);
 
 	} else {
-		// cout << "LuaEnvironment::execute pcall succeeded, script: " << script->getName() << endl;
-
-		// cout << "Stack top type = " << lua_typename(l, lua_type(l, -1)) << endl;
-		// cout << "Stack next type = " << lua_typename(l, lua_type(l, -2)) << endl;
 
 		// The Sandbox worked, and attempted to run the script. Success or failure of the script itself is
 		// returned through the stack.
 		// Top of Stack = status. 0 = Success, 1 = Script Error (fixible by script author), 2 = Vassal error
-		// Stack Top-1  = return value for status == 0, or text error message for status != 0
-		// TODO Stack Top-2  = Stack trace or additional error information
+		// Stack Top-1  = return value for status == 0, or Error Object for status != 0
 
 		int status = lua_tointeger(l, -1);
 		// cout << "LuaEnvironment::execute: status returned " << status << endl;
@@ -493,7 +514,7 @@ void LuaEnvironment::execute(Script *script, const Scriptable *thisPtr, ScriptRe
 	}
 
 	// Clear the Lua stack of anything remaining
-	lua_pop(l, lua_gettop(l));
+	cleanLuaStack(l);
 
 	// Pop the latest context frame off the stack, replacing the current frame and releasing all it's associated Proxy objects.
 	popCurrentContext();
@@ -546,4 +567,9 @@ long LuaEnvironment::incrLuaStepCount() {
 
 void LuaEnvironment::resetLuaStepCount() {
 	luaStepCount = 0;
+}
+
+// Clean the Lua Stack
+void LuaEnvironment::cleanLuaStack (lua_State *l) {
+	lua_pop (l, lua_gettop(l));
 }

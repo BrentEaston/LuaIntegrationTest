@@ -75,7 +75,7 @@ function CreateObjectProxy (object, objectName)
        if object.__properties[n] then
          _V_callback (object.type, object.ptr, 'set', n, v)
        else
-         raiseError(object.__name..": Attempt to write undefined property "..tostring(n), _V_SCRIPT_ERROR, 2)
+         raiseError(object.__name..": Attempt to write undefined property "..tostring(n), _V_SCRIPT_ERROR)
        end
     end
 
@@ -191,7 +191,7 @@ _V_NewObject = function (contextType, contextPtr)
   -- print ('In _V_NewObject, contextType='..tostring(contextType)..', contextPtr='..tostring(contextPtr))
   local o = _V_ObjectMap[contextType];
   if (o == nil) then
-    raiseError("NewObject: Attempt to create unknown Object type "..tostring(contectType), _V_VASSAL_ERROR, 2)
+    raiseError("NewObject: Attempt to create unknown Object type "..tostring(contextType), _V_VASSAL_ERROR)
   end
   return o:new(contextType, contextPtr)
 end
@@ -294,11 +294,11 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
 
   -- Parameter sanity test
   if (type(code) ~= "string") then
-    raiseError ("Attempt to execute code that is not a string", _V_VASSAL_ERROR, 1)
+    raiseError ("Attempt to execute code that is not a string", _V_VASSAL_ERROR)
   end
 
   if (_V_ObjectMap[thisType] == nil) then
-    raiseError( "Invalid this type "..tostring(thisType), _V_VASSAL_ERROR, 1)
+    raiseError( "Invalid this type "..tostring(thisType), _V_VASSAL_ERROR)
   end
 
   -- Reset the Vassal context to the one before this call
@@ -316,13 +316,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   local function lock_rawget (t, n)
     local rawget = rawget
     if (t.__lock) then
-      raiseError ("May not use rawget on a locked table", _V_SCRIPT_ERROR, 2)
+      raiseError ("May not use rawget on a locked table", _V_SCRIPT_ERROR)
     else
       local ok, result = pcall (rawget, t, n)
       if ok then
         return result
       else
-        raiseError (result, _V_VASSAL_ERROR, 2)
+        raiseError (result, _V_VASSAL_ERROR)
       end
     end
   end
@@ -331,13 +331,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   local function lock_rawset (t, n, v)
     local rawset = rawset
     if (t.__lock) then
-      raiseError ("May not use rawset on a locked table", _V_SCRIPT_ERROR, 2)
+      raiseError ("May not use rawset on a locked table", _V_SCRIPT_ERROR)
     else
       local ok, result = pcall (rawset, t, n, v)
       if ok then
         return result
       else
-        raiseError (result, _V_VASSAL_ERROR, 2)
+        raiseError (result, _V_VASSAL_ERROR)
       end
     end
   end
@@ -346,13 +346,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   local function lock_getmetatable (t)
     local getmetatable = getmetatable
     if (t.__lock) then
-      raiseError ("May not use getmetatable on a locked table", _V_SCRIPT_ERROR, 2)
+      raiseError ("May not use getmetatable on a locked table", _V_SCRIPT_ERROR)
     else
       local ok, result = pcall (getmetatable, t)
       if ok then
         return result
       else
-        raiseError (result, _V_VASSAL_ERROR, 2)
+        raiseError (result, _V_VASSAL_ERROR)
       end
     end
   end
@@ -361,13 +361,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   local function lock_setmetatable (t, mt)
     local setmetatable = setmetatable
     if (t.__lock) then
-      raiseError ("May not use setmetatable on a locked table", _V_SCRIPT_ERROR, 2)
+      raiseError ("May not use setmetatable on a locked table", _V_SCRIPT_ERROR)
     else
       local ok, result = pcall (setmetatable, t, mt)
       if ok then
         return result
       else
-        raiseError (result, _V_VASSAL_ERROR, 2)
+        raiseError (result, _V_VASSAL_ERROR)
       end
     end
   end
@@ -376,13 +376,13 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   local function lock_string_rep (s, n, sep)
     local string = {rep = string.rep}
     if (type(n) == "number" and n > 40) then
-      raiseError ("Bad argument #2 to 'rep' (too many copies)", _V_SCRIPT_ERROR, 2)
+      raiseError ("Bad argument #2 to 'rep' (too many copies)", _V_SCRIPT_ERROR)
     else
       local ok, result = pcall (string.rep, s, n, sep)
       if ok then
         return result
       else
-        raiseError (result, _V_VASSAL_ERROR, 2)
+        raiseError (result, _V_VASSAL_ERROR)
       end
     end
   end
@@ -390,14 +390,14 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
   -- Sandboxed __index metamethod to make global environment table read only
   local function lock_newindex(t, n, v)
     --print ('in lock_newindex for '..tostring(n))
-    raiseError("Attempting to set Global Variable '" .. tostring(n) .. "' to "..tostring(v)..".", _V_SCRIPT_ERROR, 2)
+    raiseError("Attempting to set Global Variable '" .. tostring(n) .. "' to "..tostring(v)..".", _V_SCRIPT_ERROR)
   end
 
   -- Sandboxed __newindex metamethod to warn prevent users trying to access undefined global environment entries
   local function lock_index(t, n)
     --print ('in lock_index for '..tostring(n))
     if _V_env[n] == nil then
-      raiseError("Attempting to read undefined value '" .. tostring(n) .. "'.", _V_SCRIPT_ERROR, 2)
+      raiseError("Attempting to read undefined value '" .. tostring(n) .. "'.", _V_SCRIPT_ERROR)
     end
     return _V_env[n]
   end
@@ -415,17 +415,11 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
     -- 1. Call the local version of the sandboxed routine the same name as the original routine (eg. local rawget = rawget)
     -- 2. Execute the old routine using pcall and trap and report any error using error (message, 2)
 
-    -- Add a sandboxed version of rawget
+    -- Add a sandboxed versions of rawget, rawset, getmetatable & setmetatable to prevent scripts fiddling with locked tables
 
     _V_env.rawget = lock_rawget
-
-    -- Add a sandboxed version of rawset
     _V_env.rawset = lock_rawset
-
-    -- Add a sandboxed version of getmetatable
     _V_env.getmetatable = lock_getmetatable
-
-    -- Add a sandboxed version of setmetatable
     _V_env.setmetatable = lock_setmetatable
 
     -- Create a metatable using the new locked __index and __newindex, but do not apply yet.
@@ -461,7 +455,8 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
     fn, err = load(code, name or "sandbox", "t", localEnvionment)
     if fn == nil then
       popThis()
-      raiseError (err, _V_SCRIPT_ERROR, 2, name)
+      -- raiseError (err, _V_SCRIPT_ERROR, 2, name)
+      raiseError (err, _V_SCRIPT_ERROR)
     end
     _V_codeCache[code] = fn
   end
@@ -477,8 +472,8 @@ function _M.eval(code, name, thisType, thisPtr, contextPtr)
 
   -- Error! return the error object to LuaEnvironment
   if not ok then
-    -- print ('_M.eval: Function failed to run at context level '..(#_V_contextStack+1))
-    -- print (tostring(ret[1].error))
+     --print ('_M.eval: Function failed to run at context level '..(#_V_contextStack+1))
+     --print (tostring(ret[1].info))
     --raiseError ( ret[1], _V_SCRIPT_ERROR , 2, name)
     return ret[1], _V_SCRIPT_ERROR
   end

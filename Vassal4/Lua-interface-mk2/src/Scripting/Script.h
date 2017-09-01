@@ -26,15 +26,15 @@ public:
 	Script(ScriptingEnvironment *env, const std::string script, const eReturnType type);
 	virtual ~Script();
 
-	std::string getSource() const;
+	const std::string getSource() const;
 	virtual std::string getExecutableSource() const;
 
-	eReturnType getReturnType() const;
+	const eReturnType getReturnType() const;
 
 	void execute (const Scriptable *context, ScriptResult &result);
 	void validate (ScriptResult &result);
 
-	std::string getName() const;
+	const std::string getName() const;
 
 protected:
 

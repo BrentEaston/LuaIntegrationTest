@@ -50,7 +50,7 @@ void Script::set (ScriptingEnvironment *env, const std::string script, const std
 
 
 /** Getter/Setter for source */
-std::string Script::getSource() const {
+const std::string Script::getSource() const {
 	return source;
 }
 
@@ -58,11 +58,11 @@ std::string Script::getExecutableSource() const {
 	return source;
 }
 
-Script::eReturnType Script::getReturnType() const {
+const Script::eReturnType Script::getReturnType() const {
 	return returnType;
 }
 
-std::string Script::getName() const {
+const std::string Script::getName() const {
 	return name;
 }
 

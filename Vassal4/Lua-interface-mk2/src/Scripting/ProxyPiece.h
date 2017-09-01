@@ -32,7 +32,7 @@ public:
 	virtual ~ProxyPiece();
 
 	void setPiece (Piece *piece);
-	Piece *getPiece();
+	Piece *getPiece() const;
 
 	void registerProxyInfo();
 

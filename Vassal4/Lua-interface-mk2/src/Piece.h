@@ -36,7 +36,7 @@ public:
 	eType getScriptableType () const;
 
 	void setMap (Map *map);
-	const Map *getMap();
+	Map *getMap();
 
 protected:
 	string myName;

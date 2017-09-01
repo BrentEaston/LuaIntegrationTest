@@ -38,7 +38,7 @@ public:
 
 	static std::string typeNames[];
 
-	static std::string getTypeName(eType type) {
+	static const std::string getTypeName(eType type) {
 		if ((type >= eType_FIRST && type <= eType_LAST) || type == eType_invalid) {
 			return typeNames[type];
 		}
@@ -50,19 +50,20 @@ public:
 	TValue();
 
 	// Construct an Integer TValue
-	TValue(int i);
+	TValue(const int i);
 	//TValue(long int i);
 	//TValue(long long int i);
 
 	// Construct a Float TValue
 	// TValue(double n);
-	TValue(float n);
+	TValue(const float n);
 
 	// Construct a Boolean TValue
-	TValue(bool b);
+	TValue(const bool b);
 
 	// Construct a String TValue
-	TValue(std::string s);
+	TValue(const std::string &s);
+	TValue(const char *s);
 
 	// Construct a Object TValue
 	TValue(Scriptable *scriptable);
@@ -71,31 +72,31 @@ public:
 
 	virtual ~TValue();
 
-	eType getType();
+	const eType getType() const;
 
 	// Return the value as a specific type
 	// The Caller should have used isXxxxxx() to determine the correct type
 	// TODO should we be auto-converting or throw an error?
-	int getIntegerValue();
-	bool getBooleanValue();
-	float getFloatValue();
-	std::string getStringValue();
+	const int getIntegerValue() const;
+	const bool getBooleanValue() const;
+	const float getFloatValue() const;
+	const std::string getStringValue() const;
 
-	void * getObjectPointer();
-	Scriptable::eType getObjectType();
+	void * getObjectPointer() const;
+	const Scriptable::eType getObjectType() const;
 
 	// Return the value as a string if possible.
-	std::string getValueAsString();
+	const std::string getValueAsString() const;
 
-	bool isNil();
-	bool isInteger();
-	bool isFloat();
-	bool isBoolean();
-	bool isString();
-	bool isObject();
+	const bool isNil() const;
+	const bool isInteger() const;
+	const bool isFloat() const;
+	const bool isBoolean() const;
+	const bool isString() const;
+	const bool isObject() const;
 
 	// Return a descriptive string representation of the value (e.g. 'Integer: 2', 'Float: 3.4', 'String: Abc')
-	const std::string toString();
+	const std::string toString() const;
 
 	void setObjectType(const Scriptable::eType type);
 private:

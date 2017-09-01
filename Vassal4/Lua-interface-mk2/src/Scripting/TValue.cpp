@@ -22,21 +22,24 @@ TValue::~TValue() {
 
 }
 
-TValue::TValue(int i) {
+TValue::TValue(const int i) {
 	setInteger(i);
 }
 
-TValue::TValue(float n) {
+TValue::TValue(const float n) {
 	setFloat(n);
 }
 
-TValue::TValue(bool b) {
+TValue::TValue(const bool b) {
 	setBoolean(b);
 }
-TValue::TValue(std::string s) {
-	// cout << "TValue::TValue(std::string s)=" << s << endl;
+TValue::TValue(const std::string &s) {
 	setString(s);
 }
+TValue::TValue(const char *s) {
+	setString(s);
+}
+
 
 TValue::TValue(void *p, const Scriptable::eType objectType) {
 	setObject(p, objectType);
@@ -54,7 +57,7 @@ TValue::TValue(Scriptable *scriptable) {
 }
 
 
-TValue::eType TValue::getType() {
+const TValue::eType TValue::getType() const{
 	return valueType;
 }
 
@@ -69,7 +72,7 @@ void TValue::setObjectType(const Scriptable::eType type) {
 }
 
 // Force the conversion of the value to a string
-std::string TValue::getValueAsString() {
+const std::string TValue::getValueAsString() const{
 	switch (getType()) {
 	case eType_integer:
 		return std::to_string(getIntegerValue());
@@ -96,27 +99,27 @@ std::string TValue::getValueAsString() {
 	return "Unknown";
 }
 
-int TValue::getIntegerValue() {
+const int TValue::getIntegerValue() const {
 	return value.i;
 }
 
-bool TValue::getBooleanValue() {
+const bool TValue::getBooleanValue() const {
 	return value.b;
 }
 
-float TValue::getFloatValue() {
+const float TValue::getFloatValue() const {
 	return value.n;
 }
 
-std::string TValue::getStringValue() {
+const std::string TValue::getStringValue() const {
 	return stringValue;
 }
 
-void * TValue::getObjectPointer() {
+void * TValue::getObjectPointer() const {
 	return value.p;
 }
 
-Scriptable::eType TValue::getObjectType() {
+const Scriptable::eType TValue::getObjectType() const {
 	return objectType;
 }
 
@@ -156,31 +159,31 @@ void TValue::setPointer(void *p) {
 	value.p = p;
 }
 
-bool TValue::isInteger() {
+const bool TValue::isInteger() const {
 	return getType() == eType_integer;
 }
 
-bool TValue::isFloat() {
+const bool TValue::isFloat() const {
 	return getType() == eType_float;
 }
 
-bool TValue::isBoolean() {
+const bool TValue::isBoolean() const {
 	return getType() == eType_boolean;
 }
 
-bool TValue::isString() {
+const bool TValue::isString() const {
 	return getType() == eType_string;
 }
 
-bool TValue::isObject() {
+const bool TValue::isObject() const {
 	return getType() == eType_Vobject;
 }
 
-bool TValue::isNil() {
+const bool TValue::isNil() const {
 	return (getType() == eType_nil);
 }
 
 // Return a descriptive string value
-const std::string TValue::toString() {
+const std::string TValue::toString() const {
 	return getTypeName(getType()) + ": " + getValueAsString();
 }

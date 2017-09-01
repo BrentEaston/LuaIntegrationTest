@@ -10,7 +10,7 @@ unordered_map<string, unique_ptr<ProxyDefinition>> Proxy::proxyDefinitions;
 Proxy::~Proxy() {
 }
 
-bool Proxy::isRegistered(string proxyName) {
+const bool Proxy::isRegistered(string proxyName) const{
 	return proxyDefinitions.count(proxyName) > 0;
 }
 
@@ -48,10 +48,10 @@ void Proxy::checkOperationArguments(const string proxyName,
 
 	// Check the number of Arguments matches.
 	if (((int) args.size()) != operation->getArgumentCount()) {
-		result.setVassalError("Invalid number of arguments for " + proxyName + ":"
-				+ operationName + ". Expected "
+		string call =  proxyName + ":"	+ operationName+"()";
+		result.setVassalError("Invalid number of arguments for " + call + ". Expected "
 				+ to_string(operation->getArgumentCount()) + ", got "
-				+ to_string(args.size()));
+				+ to_string(args.size()) + ". (Did you use "+proxyName + "."	+ operationName+"() instead of "+call+"?)");
 		return;
 	}
 
@@ -88,6 +88,6 @@ void Proxy::notifyDestroyed() {
 	destroyed = true;
 }
 
-bool Proxy::isDestroyed() const {
+const bool Proxy::isDestroyed() const {
 	return destroyed;
 }

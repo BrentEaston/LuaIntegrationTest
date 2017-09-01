@@ -67,7 +67,7 @@ void ProxyPiece::setPiece(Piece *piece) {
 	piece->addDestructionListener(this);
 }
 
-Piece *ProxyPiece::getPiece() {
+Piece *ProxyPiece::getPiece() const{
 	return this -> vassalPiece;
 }
 
@@ -93,14 +93,15 @@ void ProxyPiece::performOperation(const string operation, vector<unique_ptr<TVal
 
 	} else if (operation == "get") {
 		//result = make_unique<TValue>(getPiece()->get(args[0]->getValueAsString()));
-		result.setResultValue(make_unique<TValue> (getPiece()->get(args[0]->getValueAsString())));
+
+		result.setResultValue(unique_ptr<TValue> (getPiece()->get(args[0]->getValueAsString())));
+		// cout << "ProxyPiece::performOperation: getProxy returns with Script Result value=" << result.getResult()->toString() << endl;
 		return ;
 
 	} else if (operation == "getMap") {
 		// // cout << "In ProxyPiece::performOperation - getMap, piece=" << getPiece() << endl;
-		const Map *map = getPiece()->getMap();
+		Map *map = getPiece()->getMap();
 		// // cout << "map=" << map << endl;
-		// FIXME Ugly code, how can we make this look better?
 		result.setResultValue (make_unique<TValue> ((void *) map, map->getScriptableType()));
 		return ;
 

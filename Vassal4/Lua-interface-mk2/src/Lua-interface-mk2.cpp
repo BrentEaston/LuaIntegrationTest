@@ -116,10 +116,35 @@ int main() {
 
 		// Expression exp1("this:getMap():getProperty('Name')", "Simple Expression");
 		std::string s1 =
-				"print ('>>Start')\n"
+
+				// Test Case 1, Syntax error in script
+				// "print ('>>Start') x xs\n"
+
+				// Test Case 2, Bug in Vassal/Lua interface - need to 'break' source to generate this error
+				//"print ('this='..this:get('Name'))"
+
+				// Test Case 3, Lua run-time error, e.g. attempt to index nil
+				// "local x = {}\n"
+				// "print ('x='..x.missing[3])\n"
+
+				// Test Case 4. Sandbox error e.g. trying to use rawget on locked table
+				//"setmetatable(this, {})"
+				// "this.junk = 10"
+
+
+				// Test case 5. CPU or memory exhaustion
+				//"local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end\n"
+				//"print (fib(37))"
+
+				// Test case 7, Error detected by proxies during callback. eg. wrong args to vassal object call
+				"print ('this='..this:get('N'))"
+
+				// Test case 8.1: Syntax error is 2nd level script
+				//"print (this:getMap():get('runScript'))\n"
+
 				//"\n"
 				//"local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end\n"
-				"local startClock, startTime = os.clock(), os.time()\n"
+				//"local startClock, startTime = os.clock(), os.time()\n"
 				//"\n"
 				//"print('this='..tostring(this))\n"
 				//"print ('--- this.visible ---')\n"
@@ -148,18 +173,19 @@ int main() {
 				// "local s = '01234567890123456789012345678901234567890123456789'\n"
 				// "s:find('.*.*.*.*.*x')\n"
 				//"print('(x):rep(200)='..('x'):rep(200))\n"
+				//"this:getMap():get('runScript')\n"
 				//"print(string.rep('x', 100))\n"
-				"for x in this:getMap():getVisiblePieces() do\n"
-				"	print ('>>x='..tostring(x:getName()))\n"
-				"end\n"
+				//"for x in this:getMap():getVisiblePieces() do\n"
+				//"	print ('>>x='..tostring(x:getName()))\n"
+				//"end\n"
 				//"print ('this.Name='..this.Name)\n"
 				//"local x = this.ptr; print(tostring(x()))\n"
 				//"this.Name = 'me'\n"
 				//"print('fib(37)='..fib(37))\n"
-				"local endClock = os.clock()\n"
-				"local endTime = os.time()\n"
-				"print ('Run time = '..tostring(os.difftime(endTime, startTime))..'s')\n"
-				"print ('CPU time = '..tostring(endClock-startClock)..'s')\n"
+				//"local endClock = os.clock()\n"
+				//"local endTime = os.time()\n"
+				//"print ('Run time = '..tostring(os.difftime(endTime, startTime))..'s')\n"
+				//"print ('CPU time = '..tostring(endClock-startClock)..'s')\n"
 				//"print (inc(1))\n"
 				//"print('---Piece name from this:getProperty(Name) = '..this:getProperty('Name'))\n"
 				//"local m = this:getMap()\n"
@@ -173,11 +199,11 @@ int main() {
 		exp1.execute(&piece, result);
 
 		if (result.isSuccessful()) {
-			cout << "Script ran successfully: " + result.getResult()->toString() << endl;
+			cout << "Script ran successfully, Result=" + result.getResult()->toString() << endl;
 		} else if (result.isScriptError()) {
-			cout << "Script Error: " << result.getError() << endl << endl;
+			cout << "Script Error: " << result.getError() << endl;
 		} else if (result.isVassalError()) {
-			cout << "Vassal Error: " << result.getError() << endl << endl;
+			cout << "Vassal Error: " << result.getError() << endl;
 		}
 
 

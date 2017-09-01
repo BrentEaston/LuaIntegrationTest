@@ -62,7 +62,7 @@ void ProxyMap::setMap (Map *vassalMap) {
 	vassalMap->addDestructionListener(this);
 }
 
-Map *ProxyMap::getMap() {
+Map *ProxyMap::getMap() const {
 	return vassalMap;
 }
 
@@ -84,7 +84,7 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 
 	} else if (operation == "get") {
 		//result = make_unique<TValue>(getMap()->get(args[0]->getValueAsString()));
-		result.setResultValue (make_unique<TValue> (getMap()->get(args[0]->getValueAsString())));
+		result.setResultValue (unique_ptr<TValue> (getMap()->get(args[0]->getValueAsString())));
 		return ;
 
 	} else if (operation == "getVisiblePieces") {
@@ -92,7 +92,7 @@ void ProxyMap::performOperation(const string operation, vector<unique_ptr<TValue
 		// Retrieve the collection from the Vassal Map
 		Collection *pieces = vassalMap->getVisiblePieces();
 
-		// Create the proxy - The proxy will take ownership of the collection with a unique_ptr
+		// Create the Collection proxy - The proxy will take ownership of the collection with a unique_ptr
 		getFrame()->getProxy(pieces);
 
 		// cout << "getVisiblePiece: Collection created at " << pieces << endl;
