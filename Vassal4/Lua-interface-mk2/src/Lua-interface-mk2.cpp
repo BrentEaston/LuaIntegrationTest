@@ -137,12 +137,13 @@ int main() {
 				//"print (fib(37))"
 
 				// Test case 7, Error detected by proxies during callback. eg. wrong args to vassal object call
-				"print ('this='..this:get('N'))"
+				//"print ('this='..this:get('N'))"
 
 				// Test case 8.1: Syntax error is 2nd level script
 				//"print (this:getMap():get('runScript'))\n"
 
 				//"\n"
+				"this.rotate=4-2"
 				//"local function fib(n) return n<2 and n or fib(n-1)+fib(n-2) end\n"
 				//"local startClock, startTime = os.clock(), os.time()\n"
 				//"\n"

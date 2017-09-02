@@ -177,18 +177,10 @@ static int callback(lua_State *l) {
 	int actualParamIdx = 5;
 	while (actualParamIdx <= nargs) {
 
-		if (lua_isstring(l, actualParamIdx)) {
-			string s = lua_tostring(l, actualParamIdx++);
-			id += ":" + s;
-			// cout << "Callback: op arg " << ++opParamIdx << " String=" << s << endl;
-			// cout << "Callback: Arg count is " << args.size() << endl;
-			args.push_back(make_unique<TValue>(s));
-			// cout << "Callback: Arg count is " << args.size() << ", arg 1 type is " << args.front()->getType() << endl;
-
-		} else if (lua_isinteger(l, actualParamIdx)) {
+		if (lua_isinteger(l, actualParamIdx)) {
 			int i = lua_tointeger(l, actualParamIdx++);
 			id += ":" + to_string(i);
-			// cout << "Callback: op arg " << ++opParamIdx << " Integer=" << i << endl;
+			// cout << "Callback: op arg  Integer=" << i << endl;
 			args.push_back(make_unique<TValue>(i));
 
 		} else if (lua_isnumber(l, actualParamIdx)) {
@@ -202,6 +194,15 @@ static int callback(lua_State *l) {
 			id += ":" + to_string(b);
 			// cout << "Callback: op arg " << ++opParamIdx << " Boolean=" << b << endl;
 			args.push_back(make_unique<TValue>(b));
+
+		} else if (lua_isstring(l, actualParamIdx)) {
+			string s = lua_tostring(l, actualParamIdx++);
+			id += ":" + s;
+			// cout << "Callback: op arg String=" << s << endl;
+			// cout << "Callback: Arg count is " << args.size() << endl;
+			args.push_back(make_unique<TValue>(s));
+			// cout << "Callback: Arg count is " << args.size() << ", arg 1 type is " << args.front()->getType() << endl;
+
 
 		} else if (lua_islightuserdata(l, actualParamIdx)) {
 			string paramId = ":Object";

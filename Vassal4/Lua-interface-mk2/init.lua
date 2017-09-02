@@ -108,10 +108,9 @@ local Piece = {}
 Piece.__index = Piece
 Piece.__name = "Piece"
 Piece.__lock = true
-Piece.__properties = {}
+Piece.__properties = {rotate=true}
 
 function Piece:new (type, ptr)
-  --print('Lua:Piece:new Create new piece, type='..tostring(type)..', ptr='..tostring(ptr))
   local piece = {}
   setmetatable (piece, Piece)
   piece.type = type
